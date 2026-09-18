@@ -47,7 +47,12 @@ new <- erp(abundance, anchors, complementary, n_complementary = 86, n_iter = 500
 elapsed <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
 
 # ---- 3. Compare ---------------------------------------------------------------
-same_index <- all(mapply(identical, new$index, legacy$index))
+# Legacy draws are positions into the 285-row table (values of Remaining_index);
+# new draws are positions into `complementary`. Compare the drawn sample IDs.
+ids_new <- lapply(new$index, function(ix) complementary[ix])
+ids_old <- lapply(legacy$index, function(ix) rownames(abundance)[ix])
+same_index <- all(mapply(identical, ids_new, ids_old))
+n_iter_same_draw <- sum(mapply(identical, ids_new, ids_old))
 lab_new <- new$assignments[anchors, ]; lab_old <- legacy$assignments[anchors, ]
 label_agreement <- mean(lab_new == lab_old)
 per_iter_agreement <- colMeans(lab_new == lab_old)
@@ -60,12 +65,22 @@ alpha_diff <- vapply(seq_len(500), function(i) {
   a_new <- dmm_alpha(new$fits[[i]]); a_old <- dmm_alpha(legacy$fits[[i]])
   max(abs(a_new[, new$label_map[i, ]] - a_old[, legacy$label_map[i, ]]))
 }, numeric(1))
+# Where labels differ: did EM reach a different optimum? Compare negative log evidence.
+nle <- function(fit) DirichletMultinomial::goodnessOfFit(fit)[["NLE"]]
+nle_new <- vapply(new$fits, nle, numeric(1)); nle_old <- vapply(legacy$fits, nle, numeric(1))
+differing <- which(per_iter_agreement < 1)
+nle_cmp <- data.frame(iteration = differing, agreement = per_iter_agreement[differing],
+                      nle_new = nle_new[differing], nle_old = nle_old[differing],
+                      new_better = nle_new[differing] < nle_old[differing] - 1e-6,
+                      same_optimum = abs(nle_new[differing] - nle_old[differing]) < 1e-3)
+saveRDS(list(new = new, legacy = legacy), file.path(out_dir, "objects.rds"))
 flag_same <- c(bact2 = mean(new$flags$bact2_not_lowest_diversity == legacy$flags$bact2_not_lowest_diversity),
                rum = mean(new$flags$rum_not_highest_diversity == legacy$flags$rum_not_highest_diversity))
 
 report <- list(
   elapsed_min = elapsed, n_cores = n_cores, sec_per_fit = elapsed * 60 * n_cores / 500,
-  same_index = same_index, label_agreement = label_agreement,
+  same_index = same_index, n_iter_same_draw = n_iter_same_draw,
+  label_agreement = label_agreement, nle_cmp = nle_cmp,
   iterations_fully_identical = sum(per_iter_agreement == 1),
   worst_iteration = which.min(per_iter_agreement), worst_iteration_agreement = min(per_iter_agreement),
   label_map_identical = map_same,
@@ -78,7 +93,7 @@ report <- list(
 saveRDS(report, file.path(out_dir, "report.rds"))
 cat("\n================ REPRODUCTION REPORT: Healthy-Healthy ================\n")
 cat(sprintf("run time            : %.1f min on %d cores (%.1f s per fit)\n", elapsed, n_cores, report$sec_per_fit))
-cat(sprintf("draws identical     : %s\n", same_index))
+cat(sprintf("draws identical     : %s (%d / 500 iterations draw the same samples)\n", same_index, n_iter_same_draw))
 cat(sprintf("anchor labels equal : %.4f%%  (%d / 500 iterations fully identical; worst iteration %d at %.3f)\n",
             100 * label_agreement, report$iterations_fully_identical, report$worst_iteration, report$worst_iteration_agreement))
 cat(sprintf("name->component map : identical in %.1f%% of iterations\n", 100 * map_same))
@@ -86,5 +101,9 @@ cat(sprintf("posterior |diff|    : max %.2e, median-of-max %.2e\n", max(post_dif
 cat(sprintf("alpha |diff|        : max %.2e\n", max(alpha_diff)))
 cat(sprintf("flags (bact2, rum)  : agreement %.3f, %.3f | new %s | legacy %s\n", flag_same[1], flag_same[2],
             paste(report$n_flagged_new[1:2], collapse = "/"), paste(report$n_flagged_legacy, collapse = "/")))
+cat(sprintf("differing iterations: %d | new fit better NLE: %d | same optimum (|dNLE|<1e-3): %d | old better: %d\n",
+            nrow(nle_cmp), sum(nle_cmp$new_better), sum(nle_cmp$same_optimum),
+            sum(!nle_cmp$new_better & !nle_cmp$same_optimum)))
+if (nrow(nle_cmp)) { cat("  first differing iterations:\n"); print(utils::head(nle_cmp, 8), row.names = FALSE) }
 cat(sprintf("versions            : DirichletMultinomial %s, %s\n", report$DirichletMultinomial, report$R))
 cat("=======================================================================\n")
