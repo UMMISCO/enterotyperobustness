@@ -31,6 +31,11 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    withr
+    withr,
+    PMCMRplus,
+    boot,
+    dunn.test,
+    ggplot2,
+    ggalluvial
 Config/testthat/edition: 3
 VignetteBuilder: knitr
