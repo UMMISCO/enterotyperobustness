@@ -17,9 +17,10 @@ cmp <- function(a, b) vapply(seq_along(a), function(i) max(abs(dmm_posterior(a[[
 cat("BLAS:", extSoftVersion()[["BLAS"]], "\n")
 s1 <- run(1); s2 <- run(1); p1 <- run(10); p2 <- run(10)
 d_ss <- cmp(s1, s2); d_pp <- cmp(p1, p2); d_sp <- cmp(s1, p1)
-d_ref <- vapply(seq_along(iters), function(k) max(abs(dmm_posterior(s1[[k]]$fit) - new$posteriors[[iters[k]]][rownames(dmm_posterior(s1[[k]]$fit)), new$label_map[iters[k], ]])), numeric(1))
+d_ref <- vapply(seq_along(iters), function(k) max(abs(dmm_posterior(s1[[k]]$fit) - new$posteriors[[iters[k]]][rownames(dmm_posterior(s1[[k]]$fit)), order(new$label_map[iters[k], ])])), numeric(1))
 cat(sprintf("iterations tested      : %s\n", paste(iters, collapse = " ")))
 cat(sprintf("seq vs seq   max|dpost|: %.2e (n differing > 1e-8: %d)\n", max(d_ss), sum(d_ss > 1e-8)))
 cat(sprintf("par vs par   max|dpost|: %.2e (n differing > 1e-8: %d)\n", max(d_pp), sum(d_pp > 1e-8)))
 cat(sprintf("seq vs par   max|dpost|: %.2e (n differing > 1e-8: %d)\n", max(d_sp), sum(d_sp > 1e-8)))
+# named columns -> component order is order(map), not map
 cat(sprintf("seq vs 10-core run     : %.2e (n differing > 1e-8: %d)\n", max(d_ref), sum(d_ref > 1e-8)))

@@ -149,7 +149,15 @@ run_dmm_iterations <- function(abundance, id_list, K, dmm_seed, integerise,
   if (verbose) message("Fitting ", n_iter, " DMM models (K = ", K, ") on ", n_cores, " core(s)...")
   t0 <- Sys.time()
   runs <- if (n_cores > 1) {
-    parallel::mclapply(seq_len(n_iter), one, mc.cores = n_cores)
+    # One fork per iteration (no prescheduling). Note that dmn() itself is not
+    # run-to-run deterministic: DirichletMultinomial defines calloc as R_alloc
+    # (un-zeroed) and kmeans() reads that memory before writing it, so a few
+    # percent of fits on multimodal draws reach a different EM optimum from one
+    # run to the next, sequential or parallel. A fresh fork per fit reduces the
+    # effect; it cannot remove it. Aggregates (assignment frequencies, consensus
+    # labels) are unaffected; see inst/scripts/determinism_full.R.
+    parallel::mclapply(seq_len(n_iter), one, mc.cores = n_cores,
+                       mc.preschedule = FALSE, mc.set.seed = FALSE)
   } else {
     lapply(seq_len(n_iter), one)
   }
