@@ -51,7 +51,8 @@ test_that("multinomial_mixed_test fits or fails gracefully", {
     expect_setequal(r$per_enterotype$enterotype, c("Bact2", "Prevotella"))
     expect_equal(nrow(r$coefficients), 4)
   } else {
-    expect_null(r$wald); expect_true(length(r$messages) > 0)
+    # a fit that ran but did not converge keeps its tables for diagnosis and says why
+    expect_true(length(r$messages) > 0)
   }
   same <- cbind(Own = lab[, "Own"], B = lab[, "Own"], C = lab[, "Own"])
   r0 <- multinomial_mixed_test(same, reference_condition = "Own")

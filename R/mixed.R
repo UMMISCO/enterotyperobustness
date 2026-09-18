@@ -107,8 +107,9 @@ print.mixed_entropy_model <- function(x, ...) {
 #' @return A list with `converged`, `messages`, `wald` (statistic, df, p),
 #'   `per_enterotype` (enterotype, statistic, df, p, p_adj), `coefficients`
 #'   (enterotype, condition, estimate, se, z, p; log-odds vs the reference
-#'   condition), `model`. When the fit fails, `converged` is `FALSE`, the tables
-#'   are `NULL` and `messages` says why.
+#'   condition), `model`. `converged` is `FALSE` when the fit errored (tables
+#'   `NULL`) or when it ran with convergence warnings (tables kept for
+#'   diagnosis, not to be reported); `messages` says why.
 #' @export
 multinomial_mixed_test <- function(labels, reference_condition = colnames(labels)[1],
                                    reference_enterotype = "Bact1", method = c("PQL", "MQL"),

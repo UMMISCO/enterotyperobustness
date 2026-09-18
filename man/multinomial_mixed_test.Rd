@@ -28,8 +28,9 @@ their own group in the paper). Default: the first column.}
 A list with \code{converged}, \code{messages}, \code{wald} (statistic, df, p),
 \code{per_enterotype} (enterotype, statistic, df, p, p_adj), \code{coefficients}
 (enterotype, condition, estimate, se, z, p; log-odds vs the reference
-condition), \code{model}. When the fit fails, \code{converged} is \code{FALSE}, the tables
-are \code{NULL} and \code{messages} says why.
+condition), \code{model}. \code{converged} is \code{FALSE} when the fit errored (tables
+\code{NULL}) or when it ran with convergence warnings (tables kept for
+diagnosis, not to be reported); \code{messages} says why.
 }
 \description{
 \code{mclogit::mblogit(label ~ condition, random = ~ 1 | sample)}: a baseline-

@@ -162,6 +162,8 @@ read_legacy_erpm <- function(file, marker_features = c(bacteroides = "Bacteroide
   if (length(miss)) stop("Not an ERPM environment (missing ", paste(miss, collapse = ", "), "): ", file)
   fits <- env$result; maps <- env$EachIterationFinalEnterotypes; index <- env$index
   abundance <- env$Data_Used
+  # the 2022 environment carries the gene richness used by the annotation checks
+  if (is.null(diversity) && !is.null(env$GenRichness)) diversity <- env$GenRichness
   n_iter <- length(fits)
   runs <- lapply(seq_len(n_iter), function(i) {
     fit <- fits[[i]]
