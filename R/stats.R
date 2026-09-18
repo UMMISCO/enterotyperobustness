@@ -13,7 +13,9 @@
 #' each of them.
 #'
 #' @param data Long data frame, one row per sample and condition.
-#' @param sample,condition,value Column names.
+#' @param sample Column with the sample ID.
+#' @param condition Column with the condition (ERP experiment).
+#' @param value Column with the value to compare (entropy).
 #' @param stratum Optional column name; a **per-sample** grouping (e.g. the
 #'   sample's enterotype in the reference condition). It must be constant within
 #'   a sample; a per-condition label would break the pairing.

@@ -15,6 +15,10 @@ legacy_dunn(
 \arguments{
 \item{data}{Long data frame, one row per sample and condition.}
 
+\item{condition}{Column with the condition (ERP experiment).}
+
+\item{value}{Column with the value to compare (entropy).}
+
 \item{stratum}{Optional column name; a \strong{per-sample} grouping (e.g. the
 sample's enterotype in the reference condition). It must be constant within
 a sample; a per-condition label would break the pairing.}

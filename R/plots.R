@@ -38,7 +38,7 @@ plot_entropy <- function(data, sample = "sample", condition = "condition", value
     ggplot2::geom_errorbar(ggplot2::aes(ymin = mean - se, ymax = mean + se), width = 0.25) +
     ggplot2::scale_fill_manual(values = colours, guide = "none") +
     ggplot2::facet_wrap(~stratum, nrow = 1) +
-    ggplot2::labs(x = "Experiment", y = "mean entropy ± std. err") +
+    ggplot2::labs(x = "Experiment", y = "mean entropy \u00b1 std. err") +
     ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
   if (!is.null(pairwise) && nrow(pairwise)) {

@@ -17,7 +17,11 @@ paired_entropy_test(
 \arguments{
 \item{data}{Long data frame, one row per sample and condition.}
 
-\item{sample, condition, value}{Column names.}
+\item{sample}{Column with the sample ID.}
+
+\item{condition}{Column with the condition (ERP experiment).}
+
+\item{value}{Column with the value to compare (entropy).}
 
 \item{stratum}{Optional column name; a \strong{per-sample} grouping (e.g. the
 sample's enterotype in the reference condition). It must be constant within

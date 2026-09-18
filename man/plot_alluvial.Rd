@@ -17,6 +17,10 @@ plot_alluvial(
 \arguments{
 \item{data}{Long data frame, one row per sample and condition.}
 
+\item{sample}{Column with the sample ID.}
+
+\item{condition}{Column with the condition (ERP experiment).}
+
 \item{label}{Column with the enterotype assigned in that condition.}
 
 \item{colours}{Named fill colours.}
