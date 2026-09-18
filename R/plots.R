@@ -90,3 +90,56 @@ plot_alluvial <- function(data, sample = "sample", condition = "condition", labe
     ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
 }
+
+#' Assemble the B, C, E, F panels of Figures 1 and 2, leaving A and D empty
+#'
+#' Lays out two rows (alluvial + entropy panels) with \pkg{patchwork} at the
+#' proportions of the published page, with an empty slot at the left of each
+#' row where the nVennR "flower" schematic (panels A and D) is added in
+#' Inkscape afterwards. Panel letters are set with `labs(tag =)` on each plot.
+#'
+#' @param alluvial_top,entropy_top,alluvial_bottom,entropy_bottom ggplot objects.
+#' @param letters Panel letters for the four plots, in that order.
+#' @param widths Relative widths of the flower slot, the alluvial and the entropy panel.
+#' @return A patchwork object; save with `ggplot2::ggsave(width = 13.6, height = 11)`
+#'   to match the 978 x 795 pt page of the published figure.
+#' @export
+plot_figure_panels <- function(alluvial_top, entropy_top, alluvial_bottom, entropy_bottom,
+                               letters = c("B", "C", "E", "F"), widths = c(1.1, 1.1, 2.6)) {
+  if (!requireNamespace("patchwork", quietly = TRUE)) stop("Package patchwork is needed.")
+  tag <- function(p, l) p + ggplot2::labs(tag = l) + ggplot2::theme(plot.tag = ggplot2::element_text(face = "bold", size = 16))
+  row <- function(a, e) patchwork::plot_spacer() + a + e + patchwork::plot_layout(widths = widths)
+  top <- row(tag(alluvial_top, letters[1]), tag(entropy_top, letters[2]))
+  bottom <- row(tag(alluvial_bottom, letters[3]), tag(entropy_bottom, letters[4]))
+  patchwork::wrap_plots(top, bottom, ncol = 1)
+}
+
+#' Robustness against cohort fraction with a confidence ribbon
+#'
+#' Reproduces Figures 3 and 4: mean robustness per group (enterotype or pair)
+#' along the cohort fraction, with a ribbon between `lower` and `upper`.
+#'
+#' @param ci Data frame with `fraction`, `group`, `mean`, `lower`, `upper` and
+#'   optionally `facet`.
+#' @param colours Named colours per group; groups absent from it get defaults.
+#' @param ylab,xlab Axis labels.
+#' @return A ggplot object.
+#' @export
+plot_robustness <- function(ci, colours = enterotype_colours(), ylab = "mean robustness",
+                            xlab = "fraction of the cohort") {
+  if (!requireNamespace("ggplot2", quietly = TRUE)) stop("Package ggplot2 is needed.")
+  groups <- unique(ci$group)
+  cols <- colours[intersect(names(colours), groups)]
+  missing <- setdiff(groups, names(cols))
+  if (length(missing)) cols <- c(cols, stats::setNames(grDevices::hcl.colors(length(missing), "Dark 3"), missing))
+  p <- ggplot2::ggplot(ci, ggplot2::aes(x = fraction, y = mean, colour = group, fill = group)) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper), alpha = 0.25, colour = NA) +
+    ggplot2::geom_line() + ggplot2::geom_point(size = 1) +
+    ggplot2::scale_colour_manual(values = cols) + ggplot2::scale_fill_manual(values = cols) +
+    ggplot2::geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey40") +
+    ggplot2::scale_y_continuous(limits = c(NA, 1)) +
+    ggplot2::labs(x = xlab, y = ylab, colour = NULL, fill = NULL) +
+    ggplot2::theme_bw()
+  if ("facet" %in% names(ci)) p <- p + ggplot2::facet_wrap(~facet, nrow = 1)
+  p
+}

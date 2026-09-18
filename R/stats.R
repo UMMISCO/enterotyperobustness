@@ -162,9 +162,12 @@ bootstrap_ci <- function(x, R = 2000, type = c("bca", "percentile"), conf = 0.95
   if (!requireNamespace("boot", quietly = TRUE)) stop("Package boot is needed.")
   set.seed(seed)
   b <- boot::boot(x, function(d, i) mean(d[i]), R = R)
-  ci <- tryCatch(boot::boot.ci(b, conf = conf, type = type), error = function(e) NULL)
-  if (is.null(ci)) { type <- "percentile"; ci <- boot::boot.ci(b, conf = conf, type = "perc") }
+  boot_type <- c(bca = "bca", percentile = "perc")[[type]]     # boot.ci's own spelling
+  ci <- tryCatch(boot::boot.ci(b, conf = conf, type = boot_type), error = function(e) NULL)
   int <- if (type == "bca") ci$bca[4:5] else ci$percent[4:5]
+  if (is.null(int) || length(int) != 2) {                        # BCa can fail on degenerate data
+    type <- "percentile"; ci <- boot::boot.ci(b, conf = conf, type = "perc"); int <- ci$percent[4:5]
+  }
   c(mean = mean(x), lower = int[1], upper = int[2], n = n)
 }
 

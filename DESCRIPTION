@@ -36,6 +36,12 @@ Suggests:
     boot,
     dunn.test,
     ggplot2,
-    ggalluvial
+    ggalluvial,
+    patchwork,
+    lme4,
+    lmerTest,
+    emmeans,
+    mclogit,
+    nnet
 Config/testthat/edition: 3
 VignetteBuilder: knitr
