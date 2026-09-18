@@ -1,0 +1,22 @@
+# Data and results never enter the repository
+data/
+out/
+*.RData
+*.Rda
+*.rda
+*.rds
+!tests/testthat/testdata/*.rds
+
+# R build artefacts
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+*.Rcheck/
+*.tar.gz
+inst/doc/
+doc/
+Meta/
+
+# OS
+.DS_Store

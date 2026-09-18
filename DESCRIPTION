@@ -1,0 +1,36 @@
+Package: enterotyperobustness
+Type: Package
+Title: Sampling-Based Evaluation of Enterotype Assignment Stability (ERP and ERPM)
+Version: 0.1.0
+Authors@R: c(
+    person("Irene", "Creus-Marti", role = c("aut")),
+    person("Eugeni", "Belda", email = "eugeni.belda@ird.fr", role = c("aut", "cre")),
+    person("Jean-Daniel", "Zucker", role = "aut"),
+    person("Edi", "Prifti", role = "aut"),
+    person("Karine", "Clement", role = "aut"))
+Description: Two resampling procedures that quantify how stable individual enterotype
+    assignments are under Dirichlet Multinomial Mixture (DMM) clustering. The Enterotype
+    Robustness Process (ERP) holds an anchor set of samples fixed and varies the clinical
+    composition of the samples clustered with them; its size-perturbation variant (ERPM)
+    varies the fraction of a cohort that is clustered. Both take a plain abundance matrix
+    and sample-ID vectors, so they run on any cohort without shipping the cohort's data.
+    Cluster-to-enterotype annotation is available as the original rank heuristic and as
+    centroid matching across iterations.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Depends: R (>= 4.1)
+Imports:
+    DirichletMultinomial,
+    clue,
+    parallel,
+    stats,
+    utils
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    withr
+Config/testthat/edition: 3
+VignetteBuilder: knitr
