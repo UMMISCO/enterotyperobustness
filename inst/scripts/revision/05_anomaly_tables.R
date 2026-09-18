@@ -48,9 +48,9 @@ cache <- readRDS("out/cache/erpm_legacy.rds")
 s2 <- do.call(rbind, lapply(cache$fractions$file, function(k) {
   fl <- cache$flags[[k]]
   data.frame(fraction = cache$fractions$fraction[cache$fractions$file == k],
-             BACT2 = sum(fl$stored_bact2_not_lowest_diversity), RUM = sum(fl$stored_rum_not_highest_diversity),
+             BACT2 = sum(fl[["bact2_not_lowest_diversity"]]), RUM = sum(fl[["rum_not_highest_diversity"]]),
              W = if (is.null(cache$ties[[k]])) NA_integer_ else as.integer(cache$ties[[k]]),
-             BACT2_rederived = sum(fl$bact2_not_lowest_diversity), RUM_rederived = sum(fl$rum_not_highest_diversity))
+             BACT2_rederived = sum(fl[["bact2_not_lowest_diversity_rederived"]]), RUM_rederived = sum(fl[["rum_not_highest_diversity_rederived"]]))
 }))
 s2 <- s2[order(s2$fraction), ]
 write.csv(s2, file.path(out, "tableS2.csv"), row.names = FALSE)

@@ -37,14 +37,9 @@ consensus <- function(f, seed = 314) {         # consensus enterotype + robustne
 }
 
 # ---- 1. Core / variable lists of the paper (union over the three anchors) ---------
-sl <- list(
-  healthy = local({ e <- new.env(); load(file.path(fig, "Figure1/samplesList_alluvials_healthyCore.rda"), envir = e); e$samplesList_alluvial$five_experiments }),
-  t2d     = local({ e <- new.env(); load(file.path(fig, "Figure2/Figure2ABC_T2Dcore/samplesList_alluvials_T2DmetfCore.rda"), envir = e); e$samplesList_alluvial$four_experiments }),
-  obese   = local({ e <- new.env(); load(file.path(fig, "Figure2/Figure2DEF_ObeseCore/samplesList_alluvials_ObeseCore.rda"), envir = e); e$samplesList_alluvial$four_experiments }))
-status_of <- do.call(rbind, lapply(ent, function(e) rbind(
-  data.frame(sample = unique(unlist(lapply(sl, function(x) x[[e]]$core))), enterotype = e, status = "core"),
-  data.frame(sample = unique(unlist(lapply(sl, function(x) x[[e]]$variable))), enterotype = e, status = "variable"))))
-status_of <- status_of[!duplicated(status_of[, c("sample", "enterotype")]), ]
+source("inst/scripts/metacardis_data.R")
+status_of <- load_published_core_variable(fig)$table[, c("sample", "enterotype", "status")]
+status_of <- status_of[!duplicated(status_of[, c("sample", "enterotype")]), ]   # union over the three anchor sets
 cat("core/variable entries:", table(status_of$status), "(", length(unique(status_of$sample)), "unique samples )\n")
 
 # ---- 2. Per fraction: robustness by enterotype, status, and pair ---------------------

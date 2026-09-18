@@ -29,3 +29,23 @@ test_that("argmax_rows breaks ties reproducibly and reports them", {
   expect_true(a1$tie[1]); expect_false(a1$tie[2])
   expect_equal(a1$index[2], 3L); expect_true(is.na(a1$index[3]))
 })
+
+test_that("union_counts keeps repeated rows with unique names and aligns diversity", {
+  A <- matrix(1:12, 4, 3, dimnames = list(c("a", "b", "c", "d"), c("x", "y", "z")))
+  div <- c(a = 1, b = 2, c = 3, d = 4)
+  u <- union_counts(A, c("a", "b", "a", "d"), div)
+  expect_equal(nrow(u$counts), 4)
+  expect_equal(rownames(u$counts), c("a", "b", "a.1", "d"))
+  expect_equal(unname(u$diversity), c(1, 2, 1, 4))
+  expect_equal(u$ids_unique, c("a", "b", "d")); expect_equal(u$keep, c(TRUE, TRUE, FALSE, TRUE))
+  expect_error(check_abundance(A[c("a", "a"), ]), "duplicated")
+})
+
+test_that("adjusted_rand_index handles edge cases and agrees with the definition", {
+  expect_equal(adjusted_rand_index(c(1, 1, 2, 2), c("x", "x", "y", "y")), 1)
+  expect_equal(adjusted_rand_index(c(1, 1, 2, 2), c("y", "y", "x", "x")), 1)
+  expect_lt(adjusted_rand_index(c(1, 1, 2, 2, 3, 3), c(1, 2, 1, 2, 1, 2)), 0.1)
+  expect_true(is.na(adjusted_rand_index("a", "b")))
+  expect_true(is.na(adjusted_rand_index(c(NA, "a"), c("b", NA))))
+  expect_error(adjusted_rand_index(1:3, 1:2), "same length")
+})

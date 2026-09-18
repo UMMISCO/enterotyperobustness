@@ -45,7 +45,8 @@ legacy_erp_experiments <- function() {
 #' @param keep_fits Keep the `DMN` objects in the result.
 #' @return An `erp_result` with two extra elements: `legacy_agreement`, the
 #'   fraction of stored anchor labels reproduced from the fits, and
-#'   `legacy_files`, the files read.
+#'   `legacy_files`, the files read. In `flags`, plain names are the 2022
+#'   `WARNING` flags and `*_rederived` columns come from re-annotating the fits.
 #' @export
 read_legacy_erp <- function(root, label, folder = NULL, abundance = NULL,
                             marker_features = c(bacteroides = "Bacteroides", prevotella = "Prevotella"),
@@ -94,12 +95,13 @@ read_legacy_erp <- function(root, label, folder = NULL, abundance = NULL,
     keep <- !duplicated(ids)
     ann <- NULL
     if (!is.null(abundance)) {
-      ann <- annotate_clusters(fit, abundance[ids, , drop = FALSE], marker_features, diversity,
+      u <- union_counts(abundance, ids, diversity)
+      ann <- annotate_clusters(fit, u$counts, marker_features, u$diversity,
                                method = "rank", extra_checks = extra_checks)
     }
     list(ids = ids[keep], labels = labels[keep], posterior = post[keep, , drop = FALSE],
          map = map,
-         flags = if (is.null(ann)) data.frame(row.names = 1) else ann$flags,
+         flags = if (is.null(ann)) data.frame(row.names = 1) else stats::setNames(ann$flags, paste0(names(ann$flags), "_rederived")),
          gap = if (is.null(ann)) data.frame(row.names = 1) else ann$gap,
          reannotated_map = if (is.null(ann)) NULL else ann$map,
          fit = if (keep_fits) fit else NULL)
@@ -113,8 +115,8 @@ read_legacy_erp <- function(root, label, folder = NULL, abundance = NULL,
     w <- w[, paste0("V", 1:5)] != "0"
     colnames(w) <- c("bact2_not_lowest_diversity", "rum_not_highest_diversity",
                      "rum_not_highest_FS", "rum_not_highest_FSR", "rum_not_highest_FSRE")
-    stored <- cbind(iteration = seq_len(n_iter), as.data.frame(w))
-    extra <- out$flags[, setdiff(names(out$flags), "iteration"), drop = FALSE]
+    stored <- cbind(iteration = seq_len(n_iter), as.data.frame(w))      # plain names = the 2022 WARNING flags
+    extra <- out$flags[, setdiff(names(out$flags), "iteration"), drop = FALSE]  # *_rederived = re-annotation
     out$flags <- if (ncol(extra)) cbind(stored, extra) else stored   # cbind(NULL) would fail
   }
   # Agreement between rebuilt labels and the stored EnterotypeAssigment vectors (anchors only)
@@ -173,16 +175,18 @@ read_legacy_erpm <- function(file, marker_features = c(bacteroides = "Bacteroide
     ids <- rownames(post)
     colnames(post) <- component_names
     post <- post[, enterotype_names(), drop = FALSE]
-    ann <- annotate_clusters(fit, abundance[ids, , drop = FALSE], marker_features, diversity,
+    u <- union_counts(abundance, ids, diversity)
+    ann <- annotate_clusters(fit, u$counts, marker_features, u$diversity,
                              method = "rank", extra_checks = extra_checks)
     list(ids = ids, labels = component_names[dmm_assign(fit)], posterior = post,
-         map = map, flags = ann$flags, gap = ann$gap, fit = if (keep_fits) fit else NULL)
+         map = map, flags = stats::setNames(ann$flags, paste0(names(ann$flags), "_rederived")),
+         gap = ann$gap, fit = if (keep_fits) fit else NULL)
   })
   out <- assemble_result(runs, all_samples = rownames(abundance), keep_fits = keep_fits)
-  if (!is.null(env$WARNING)) {
+  if (!is.null(env$WARNING)) {                      # plain names = the 2022 WARNING flags
     w <- env$WARNING[, 1:2] != "0"
-    out$flags$stored_bact2_not_lowest_diversity <- w[, 1]
-    out$flags$stored_rum_not_highest_diversity <- w[, 2]
+    out$flags$bact2_not_lowest_diversity <- w[, 1]
+    out$flags$rum_not_highest_diversity <- w[, 2]
   }
   out$index <- index
   out$fraction <- if (!is.null(env$Percen)) env$Percen else NA_real_

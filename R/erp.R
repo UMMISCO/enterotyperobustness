@@ -126,13 +126,10 @@ run_dmm_iterations <- function(abundance, id_list, K, dmm_seed, integerise,
   n_iter <- length(id_list)
   one <- function(i) {
     ids <- id_list[[i]]
-    X <- abundance[ids, , drop = FALSE]
-    # With-replacement draws repeat rows: keep the repeated rows (they were part
-    # of the 2022 fits) but give them unique names so that lookups work.
-    rownames(X) <- make.unique(ids)
-    div <- if (is.null(diversity)) NULL else stats::setNames(diversity[ids], rownames(X))
+    u <- union_counts(abundance, ids, diversity)
+    X <- u$counts
     fit <- fit_dmm(X, K = K, seed = dmm_seed, integerise = integerise)
-    ann <- annotate_clusters(fit, X, marker_features, div,
+    ann <- annotate_clusters(fit, X, marker_features, u$diversity,
                              method = annotate, reference = reference,
                              extra_checks = extra_checks)
     post <- dmm_posterior(fit)

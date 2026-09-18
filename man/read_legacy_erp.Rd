@@ -35,7 +35,8 @@ when \code{abundance} is given.}
 \value{
 An \code{erp_result} with two extra elements: \code{legacy_agreement}, the
 fraction of stored anchor labels reproduced from the fits, and
-\code{legacy_files}, the files read.
+\code{legacy_files}, the files read. In \code{flags}, plain names are the 2022
+\code{WARNING} flags and \verb{*_rederived} columns come from re-annotating the fits.
 }
 \description{
 Rebuilds an \code{erp_result} from the files the original pipeline wrote:

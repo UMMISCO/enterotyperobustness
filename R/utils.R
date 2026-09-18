@@ -109,3 +109,43 @@ argmax_rows <- function(m, seed = NULL) {
   }
   list(index = idx, tie = tie)
 }
+
+#' Adjusted Rand index between two labellings
+#'
+#' Hubert and Arabie's adjusted Rand index, computed from the contingency
+#' table; 1 for identical partitions (up to renaming), about 0 for independent ones.
+#'
+#' @param a,b Vectors of labels of the same length (NA pairs are dropped).
+#' @export
+adjusted_rand_index <- function(a, b) {
+  if (length(a) != length(b)) stop("`a` and `b` must have the same length.")
+  keep <- !is.na(a) & !is.na(b); a <- a[keep]; b <- b[keep]
+  if (length(a) < 2) return(NA_real_)
+  tab <- table(a, b); n <- sum(tab)
+  comb2 <- function(x) x * (x - 1) / 2
+  sum_ij <- sum(comb2(tab)); sum_a <- sum(comb2(rowSums(tab))); sum_b <- sum(comb2(colSums(tab)))
+  expected <- sum_a * sum_b / comb2(n); maxi <- (sum_a + sum_b) / 2
+  if (maxi == expected) return(1)
+  (sum_ij - expected) / (maxi - expected)
+}
+
+#' Count matrix of one iteration's samples, tolerant to repeated draws
+#'
+#' Draws with replacement repeat a sample within an iteration. The repeated rows
+#' were part of the 2022 fits and must stay, but row names have to be unique for
+#' lookups, so they are made unique here and the per-sample `diversity` is
+#' aligned to them. Used by [erp()], [erpm()] and the legacy readers.
+#'
+#' @param abundance Samples x features matrix.
+#' @param ids Sample IDs of the iteration, possibly repeated, in fit order.
+#' @param diversity Optional named numeric vector.
+#' @return A list with `counts`, `diversity` (or `NULL`), `keep` (logical, first
+#'   occurrence of each ID) and `ids_unique`.
+#' @export
+union_counts <- function(abundance, ids, diversity = NULL) {
+  X <- abundance[ids, , drop = FALSE]
+  rownames(X) <- make.unique(ids)
+  div <- if (is.null(diversity)) NULL else stats::setNames(diversity[ids], rownames(X))
+  keep <- !duplicated(ids)
+  list(counts = X, diversity = div, keep = keep, ids_unique = ids[keep])
+}
