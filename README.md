@@ -52,3 +52,9 @@ without refitting.
 # install.packages("BiocManager"); BiocManager::install("DirichletMultinomial")
 devtools::install()     # from the package directory
 ```
+
+## Repositories
+
+- Source of truth: `https://git.ummisco.fr/jdzucker/enterotyperobustness` (UMMISCO GitLab, private during the revision).
+- Mirror: `https://github.com/UMMISCO/enterotyperobustness`, updated automatically by GitLab push mirroring. Do not push there directly.
+- No data is ever committed: the MetaCardis tables are read from paths given by environment variables (`METACARDIS_DATA`, `ENTEROTYPES_MIRROR`).
