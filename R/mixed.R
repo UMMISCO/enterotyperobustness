@@ -32,6 +32,7 @@ mixed_entropy_model <- function(data, sample = "sample", condition = "condition"
   }
   d <- data.frame(.y = data[[value]], .cond = factor(data[[condition]]),
                   .id = factor(data[[sample]]), stringsAsFactors = FALSE)
+  if (nlevels(d$.cond) < 2) stop("At least two conditions are needed.")
   if (!is.null(label)) d$.lab <- factor(data[[label]])
   f <- if (is.null(label)) .y ~ .cond + (1 | .id) else .y ~ .cond * .lab + (1 | .id)
   msgs <- character(0)
@@ -122,6 +123,7 @@ multinomial_mixed_test <- function(labels, reference_condition = colnames(labels
                                    p_adjust = "BH") {
   method <- match.arg(method)
   if (!requireNamespace("mclogit", quietly = TRUE)) stop("Package mclogit is needed.")
+  if (!is.matrix(labels) || ncol(labels) < 2) stop("`labels` must be a samples x conditions matrix with at least two conditions.")
   d <- long_labels(labels, reference_condition, reference_enterotype)
   msgs <- character(0)
   fit <- tryCatch(withCallingHandlers(
@@ -180,6 +182,8 @@ multinomial_mixed_test <- function(labels, reference_condition = colnames(labels
 multinomial_permutation_test <- function(labels, reference_condition = colnames(labels)[1],
                                          reference_enterotype = "Bact1", n_perm = 999, seed = 314) {
   if (!requireNamespace("nnet", quietly = TRUE)) stop("Package nnet is needed.")
+  if (!is.matrix(labels) || ncol(labels) < 2) stop("`labels` must be a samples x conditions matrix with at least two conditions.")
+  n_perm <- check_count(n_perm, "n_perm")
   labels <- labels[stats::complete.cases(labels), , drop = FALSE]
   if (nrow(labels) < 2) stop("Fewer than two samples with a label in every condition.")
   if (length(unique(as.vector(labels))) < 2) stop("`labels` has fewer than two distinct labels.")

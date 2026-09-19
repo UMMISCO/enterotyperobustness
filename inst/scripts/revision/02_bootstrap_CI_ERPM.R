@@ -17,11 +17,12 @@
 #          CI_comparison.pdf, summary.txt
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
+source("inst/scripts/cache_utils.R")
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 fig <- file.path(mirror, "analyses/9.analyses_mars2026")
 out <- "out/02_bootstrap_CI"; dir.create(out, showWarnings = FALSE, recursive = TRUE)
-cache <- readRDS("out/cache/erpm_legacy.rds")
+cache <- load_erpm_cache(mirror)
 ent <- enterotype_names()                      # Bact1 Bact2 Prevotella Ruminococcus = codes 1..4
 R_samples <- 2000; R_iter <- 200; seed <- 314
 

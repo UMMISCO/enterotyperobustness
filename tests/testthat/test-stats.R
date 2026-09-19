@@ -112,7 +112,7 @@ test_that("degenerate inputs give defined results instead of NaN or opaque error
   r <- cochran_q_test(lab, "Prevotella")                    # absent everywhere
   expect_equal(r$test$statistic, 0); expect_equal(r$test$p, 1); expect_true(all(r$pairwise$p == 1))
   const <- long; const$entropy <- 0.3
-  expect_message(rc <- paired_entropy_test(const), "identical")
+  expect_message(rc <- paired_entropy_test(const), "no within-sample variation")
   expect_equal(rc$omnibus$p, 1); expect_equal(nrow(rc$pairwise), 0)
 })
 
@@ -123,4 +123,25 @@ test_that("anchor_permutation_test uses complete cases and reports n", {
   r <- anchor_permutation_test(lab2, n_perm = 50)
   expect_equal(r$n, 29); expect_equal(sum(r$table), 29 * 3)
   expect_equal(r$statistic, anchor_permutation_test(lab[-1, ], n_perm = 50)$statistic)
+})
+
+test_that("no within-sample variation gives statistic 0 and p = 1, even when samples differ in level", {
+  skip_if_not_installed("PMCMRplus")
+  d <- expand.grid(sample = paste0("s", 1:6), condition = c("A", "B", "C"), stringsAsFactors = FALSE)
+  d$entropy <- rep(1:6, times = 3)
+  expect_message(r <- paired_entropy_test(d), "no within-sample variation")
+  expect_equal(r$omnibus$statistic, 0); expect_equal(r$omnibus$p, 1); expect_equal(nrow(r$pairwise), 0)
+  lab <- cbind(A = rep(c("Bact1", "Bact2"), 5), B = rep(c("Bact1", "Bact2"), 5), C = rep(c("Bact1", "Bact2"), 5))
+  rownames(lab) <- sprintf("s%02d", 1:10)
+  q <- cochran_q_test(lab, "Bact2")
+  expect_equal(q$test$statistic, 0); expect_equal(q$test$p, 1); expect_true(all(q$pairwise$p == 1))
+  expect_true(all(is.finite(q$prevalence)))
+})
+
+test_that("permutation tests validate n_perm and the number of conditions", {
+  lab <- cbind(A = rep(c("Bact1", "Bact2", "Prevotella"), 10), B = rep(c("Bact2", "Bact1", "Prevotella"), 10))
+  rownames(lab) <- sprintf("s%02d", 1:30)
+  expect_error(anchor_permutation_test(lab, n_perm = 0), "n_perm")
+  expect_error(anchor_permutation_test(lab[, 1, drop = FALSE], n_perm = 10), "at least two conditions")
+  expect_error(cochran_q_test(lab[, 1, drop = FALSE], "Bact2"), "at least two conditions")
 })

@@ -25,7 +25,7 @@
 #          summary.txt ; out/cache/reference_fit.rds
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
-source("inst/scripts/metacardis_data.R")
+source("inst/scripts/metacardis_data.R"); source("inst/scripts/cache_utils.R")
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 exp_dir <- file.path(mirror, "analyses/2.Estimating_DMM/Article/Experiments")
@@ -36,12 +36,14 @@ md <- load_metacardis_data(); A <- md$abundance
 
 # ---- 1. Reference fit on the full cohort (rank-annotated) --------------------------------
 ref_file <- "out/cache/reference_fit.rds"
-if (file.exists(ref_file)) ref <- readRDS(ref_file) else {
+ref_manifest <- reference_fit_manifest(A, md)
+ref <- cache_read(ref_file, ref_manifest)
+if (is.null(ref)) {
   t0 <- Sys.time()
   ref_fit <- fit_dmm(A, K = 4, seed = 314, integerise = "trunc")
   ref <- reference_centroids(A, md$marker_features, md$richness, fit = ref_fit)
   attr(ref, "fit_time_min") <- as.numeric(difftime(Sys.time(), t0, units = "mins"))
-  saveRDS(ref, ref_file)
+  cache_write(ref, ref_file, ref_manifest)
 }
 ref_ann <- attr(ref, "annotation")
 cat("reference fit on", nrow(A), "samples: components", paste(ref_ann$component_names, collapse = "/"),

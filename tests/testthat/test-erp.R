@@ -72,3 +72,8 @@ test_that("erp does not disturb the caller's random stream", {
   invisible(erp(X, anchors, pool, 12, n_iter = 2, marker_features = markers, verbose = FALSE, keep_fits = FALSE))
   expect_identical(stats::runif(2), ref)
 })
+
+test_that("seeds must be finite integers", {
+  expect_error(erp(X, anchors, pool, 12, n_iter = 2, iteration_seeds = c(1, NA), marker_features = markers, verbose = FALSE), "iteration_seeds")
+  expect_error(erp(X, anchors, pool, 12, n_iter = 2, dmm_seed = 1.5, marker_features = markers, verbose = FALSE), "dmm_seed")
+})

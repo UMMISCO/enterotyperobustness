@@ -62,6 +62,7 @@ erpm <- function(abundance, classes, fractions = erpm_default_fractions(), n_ite
          " would collide); use a grid with at most two decimals.")
   }
   if (length(iteration_seeds) != n_iter) stop("`iteration_seeds` must have length `n_iter`.")
+  iteration_seeds <- check_seeds(iteration_seeds, "iteration_seeds", n_iter); dmm_seed <- check_seeds(dmm_seed, "dmm_seed", 1)
   check_diversity(diversity, names(classes))
   annotate <- match.arg(annotate)
   integerise <- match.arg(integerise)

@@ -116,3 +116,10 @@ test_that("input validation: entropy rows must sum to 1, pairs must be disjoint,
   expect_message(cv <- core_variable(lab), "dropped")
   expect_s3_class(cv, "data.frame"); expect_equal(nrow(cv), 0)
 })
+
+test_that("assignment_entropy validates the logarithm base", {
+  fr <- assignment_frequency(r)[anchors, ]
+  expect_error(assignment_entropy(fr, base = 1), "base")
+  expect_error(assignment_entropy(fr, base = -2), "base")
+  expect_equal(assignment_entropy(fr, base = 10), assignment_entropy(fr, base = 2))   # base cancels after normalisation
+})

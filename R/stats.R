@@ -55,8 +55,8 @@ paired_entropy_test <- function(data, sample = "sample", condition = "condition"
       message("Stratum ", s, " skipped: ", nrow(wide), " complete sample(s) in ", ncol(wide), " condition(s).")
       next
     }
-    if (all(wide == wide[1])) {                      # no variability at all: nothing to test
-      message("Stratum ", s, ": all values identical; statistic 0, p = 1, no pairwise table.")
+    if (all(apply(wide, 1, function(z) length(unique(z)) == 1))) {   # no within-sample variation: nothing to test
+      message("Stratum ", s, ": no within-sample variation; statistic 0, p = 1, no pairwise table.")
       omni[[s]] <- data.frame(stratum = s, n = nrow(wide), statistic = 0, df = ncol(wide) - 1, p = 1)
       next
     }
@@ -98,13 +98,14 @@ paired_entropy_test <- function(data, sample = "sample", condition = "condition"
 #'   per pair). Samples with a missing label in any condition are dropped.
 #' @export
 cochran_q_test <- function(labels, enterotype, p_adjust = "BH") {
+  if (!is.matrix(labels) || ncol(labels) < 2) stop("`labels` must be a samples x conditions matrix with at least two conditions.")
   labels <- labels[stats::complete.cases(labels), , drop = FALSE]
   if (nrow(labels) < 2) stop("Fewer than two samples with a label in every condition.")
   ind <- (labels == enterotype) * 1
   conds <- colnames(labels)
   cmb <- utils::combn(conds, 2)
   pw <- data.frame(cond1 = cmb[1, ], cond2 = cmb[2, ], stringsAsFactors = FALSE)
-  if (all(ind == ind[1])) {                          # enterotype absent everywhere, or present everywhere: no test
+  if (all(apply(ind, 1, function(z) length(unique(z)) == 1))) {   # no sample changes status across conditions: no test
     pw$p <- 1; pw$p_adj <- 1
     return(list(test = data.frame(enterotype = enterotype, n = nrow(labels), statistic = 0, df = ncol(labels) - 1, p = 1),
                 prevalence = colMeans(ind), pairwise = pw))
@@ -144,6 +145,8 @@ cochran_q_test <- function(labels, enterotype, p_adjust = "BH") {
 #'   residual, p, p_adj).
 #' @export
 anchor_permutation_test <- function(labels, n_perm = 9999, seed = 314, p_adjust = "BH") {
+  if (!is.matrix(labels) || ncol(labels) < 2) stop("`labels` must be a samples x conditions matrix with at least two conditions.")
+  n_perm <- check_count(n_perm, "n_perm")
   labels <- labels[stats::complete.cases(labels), , drop = FALSE]
   if (nrow(labels) < 2) stop("Fewer than two samples with a label in every condition.")
   lev <- sort(unique(as.vector(labels)))

@@ -94,6 +94,7 @@ erp <- function(abundance, anchors, complementary,
   n_iter <- check_count(n_iter, "n_iter"); K <- check_count(K, "K", 2); n_cores <- check_count(n_cores, "n_cores")
   n_complementary <- check_count(n_complementary, "n_complementary")
   if (length(iteration_seeds) != n_iter) stop("`iteration_seeds` must have length `n_iter`.")
+  iteration_seeds <- check_seeds(iteration_seeds, "iteration_seeds", n_iter); dmm_seed <- check_seeds(dmm_seed, "dmm_seed", 1)
   check_diversity(diversity, c(anchors, complementary))
   replace <- match.arg(replace)
   annotate <- match.arg(annotate)

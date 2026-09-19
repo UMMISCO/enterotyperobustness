@@ -42,6 +42,7 @@ assignment_frequency <- function(x) {
 #' @return A named numeric vector.
 #' @export
 assignment_entropy <- function(freq, base = 2) {
+  if (!is.numeric(base) || length(base) != 1 || !is.finite(base) || base <= 0 || base == 1) stop("`base` must be a positive number other than 1.")
   if (all(enterotype_names() %in% colnames(freq))) freq <- freq[, enterotype_names(), drop = FALSE]
   if (any(freq < 0, na.rm = TRUE) || any(freq > 1, na.rm = TRUE)) stop("`freq` must hold frequencies in [0, 1].")
   rs <- rowSums(freq); bad <- !is.na(rs) & abs(rs - 1) > 1e-6

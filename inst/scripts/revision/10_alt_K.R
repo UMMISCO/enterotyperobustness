@@ -29,7 +29,7 @@ md <- load_metacardis_data(); A <- md$abundance; groups <- md$groups[rownames(A)
 
 # ---- 1. Reference fits on the full cohort, K = 3, 4, 5 ----------------------------------------
 ref_file <- "out/cache/altK_reference_fits.rds"
-inputs <- list(ids = rownames(A), groups = groups, dims = dim(A), total = sum(A))
+inputs <- list(A = A, groups = groups)
 ref_manifest <- cache_manifest(params = list(K = c(3, 4, 5), seed = 314, integerise = "trunc"), inputs = inputs)
 refs <- cache_read(ref_file, ref_manifest)
 if (is.null(refs)) {
@@ -81,7 +81,7 @@ rob_of <- function(m, levels, K) {
   data.frame(sample = rownames(f)[ok], label = levels[am$index[ok]], robustness = f[cbind(seq_len(nrow(f)), am$index)][ok],
              entropy = assignment_entropy(f[ok, , drop = FALSE]), n_drawn = attr(f, "n_drawn")[ok], stringsAsFactors = FALSE)
 }
-cache <- readRDS("out/cache/erpm_legacy.rds")
+cache <- load_erpm_cache(mirror)
 rob <- do.call(rbind, c(
   lapply(fractions, function(Q) { key <- cache$fractions$file[abs(cache$fractions$fraction - Q) < 1e-9]
     cbind(K = 4, fraction = Q, rob_of(cache$assignments[[key]], 1:4, 4)) }),

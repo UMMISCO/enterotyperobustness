@@ -14,7 +14,7 @@
 #   ties        : W_50 per fraction
 #   samples     : the 2 022 sample IDs
 # ------------------------------------------------------------------------------
-suppressMessages(pkgload::load_all(".", quiet = TRUE))
+suppressMessages(pkgload::load_all(".", quiet = TRUE)); source("inst/scripts/cache_utils.R")
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 conf <- file.path(mirror, "analyses/2.Estimating_DMM/Article/Confidence")
@@ -47,7 +47,7 @@ for (f in files) {
   rm(r, a, m); invisible(gc())
 }
 cache$fractions <- cache$fractions[order(cache$fractions$fraction), ]
-saveRDS(cache, "out/cache/erpm_legacy.rds")
+cache_write(cache, "out/cache/erpm_legacy.rds", erpm_cache_manifest(conf))
 cat("\ncached", nrow(cache$fractions), "fractions to out/cache/erpm_legacy.rds (",
     round(file.size("out/cache/erpm_legacy.rds") / 1e6), "MB ) in",
     round(as.numeric(difftime(Sys.time(), t0, units = "mins")), 1), "min\n")

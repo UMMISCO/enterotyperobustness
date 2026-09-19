@@ -13,6 +13,7 @@
 #          overlap_with_published.csv, Figure3B_sensitivity.pdf, summary.txt
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
+source("inst/scripts/cache_utils.R")
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 fig <- file.path(mirror, "analyses/9.analyses_mars2026")
@@ -66,7 +67,7 @@ overlap <- do.call(rbind, lapply(names(cls), function(r) {
 write.csv(overlap, file.path(out, "overlap_with_published.csv"), row.names = FALSE)
 
 # ---- 3. Figure 3B contrast under each rule, from the ERPM cache ---------------------------------
-cache <- readRDS("out/cache/erpm_legacy.rds")
+cache <- load_erpm_cache(mirror)
 freq_int <- function(m) { nd <- rowSums(!is.na(m)); f <- vapply(1:4, function(k) rowSums(m == k, na.rm = TRUE) / nd, numeric(nrow(m)))
   dimnames(f) <- list(rownames(m), ent); f[nd == 0, ] <- NA; f }
 rob <- lapply(cache$fractions$file, function(k) { f <- freq_int(cache$assignments[[k]]); am <- argmax_rows(f, seed = 314)

@@ -13,6 +13,7 @@
 #          comparison_with_submitted.csv, excluded_iterations_healthy.csv, summary.txt
 # ------------------------------------------------------------------------------
 suppressMessages(pkgload::load_all(".", quiet = TRUE))
+source("inst/scripts/cache_utils.R")
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 art <- file.path(mirror, "analyses/2.Estimating_DMM/Article")
@@ -46,7 +47,7 @@ writeLines(c("\\begin{tabular}{lcc}", "\\toprule", "Anchor--Complementary datase
              "\\bottomrule", "\\end{tabular}"), file.path(out, "tableS1.tex"))
 
 # ---- 2. Table S2: ERPM on the full cohort, from the cache -----------------------------------
-cache <- readRDS("out/cache/erpm_legacy.rds")
+cache <- load_erpm_cache(mirror)
 s2 <- do.call(rbind, lapply(cache$fractions$file, function(k) {
   fl <- cache$flags[[k]]
   data.frame(fraction = cache$fractions$fraction[cache$fractions$file == k],

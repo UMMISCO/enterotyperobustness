@@ -24,6 +24,14 @@ check_abundance <- function(abundance) {
   abundance
 }
 
+#' Validate integer seeds (internal): finite whole numbers, any sign
+#' @keywords internal
+check_seeds <- function(x, what, n = NULL) {
+  if (!is.numeric(x) || any(!is.finite(x)) || any(x != round(x))) stop(sprintf("`%s` must be finite integer(s).", what))
+  if (!is.null(n) && length(x) != n) stop(sprintf("`%s` must have length %d.", what, n))
+  as.integer(x)
+}
+
 #' Validate a positive integer scalar (internal)
 #' @keywords internal
 check_count <- function(x, what, min = 1) {

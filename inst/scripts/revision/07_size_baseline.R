@@ -20,6 +20,7 @@
 #          summary.txt
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
+source("inst/scripts/cache_utils.R")
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 fig <- file.path(mirror, "analyses/9.analyses_mars2026")
@@ -53,7 +54,7 @@ erp_rows <- do.call(rbind, lapply(names(designs), function(a) {
 }))
 
 # ---- 2. ERPM: the same anchors along Q --------------------------------------------------------
-cache <- readRDS("out/cache/erpm_legacy.rds")
+cache <- load_erpm_cache(mirror)
 freq_int <- function(m) { nd <- rowSums(!is.na(m)); f <- vapply(1:4, function(k) rowSums(m == k, na.rm = TRUE) / nd, numeric(nrow(m)))
   dimnames(f) <- list(rownames(m), ent); f[nd == 0, ] <- NA; attr(f, "n_drawn") <- nd; f }
 anchor_ids <- lapply(designs, function(x) unique(x$d$sample))

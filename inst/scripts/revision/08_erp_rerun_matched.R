@@ -17,7 +17,7 @@
 # Usage  : Rscript inst/scripts/revision/08_erp_rerun_matched.R [n_cores]
 # ------------------------------------------------------------------------------
 suppressMessages(pkgload::load_all(".", quiet = TRUE))
-source("inst/scripts/metacardis_data.R")
+source("inst/scripts/metacardis_data.R"); source("inst/scripts/cache_utils.R")
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 args <- commandArgs(trailingOnly = TRUE); n_cores <- if (length(args)) as.integer(args[1]) else 12L
@@ -26,7 +26,8 @@ fig <- file.path(mirror, "analyses/9.analyses_mars2026")
 out <- "out/08_erp_rerun_matched"; dir.create(out, showWarnings = FALSE, recursive = TRUE); dir.create("out/cache", showWarnings = FALSE)
 ent <- enterotype_names()
 md <- load_metacardis_data(); A <- md$abundance
-ref <- readRDS("out/cache/reference_fit.rds")
+ref <- cache_read("out/cache/reference_fit.rds", reference_fit_manifest(A, md))
+if (is.null(ref)) stop("No valid reference fit cache: run inst/scripts/revision/03_cluster_matching.R first.")
 status_tab <- load_published_core_variable(fig)$table
 anchor_set_of <- c(Healthy = "healthy", DiabeticsT = "t2d", Obese = "obese")
 
@@ -50,14 +51,18 @@ for (i in seq_len(nrow(exps))) {
   }
   stopifnot(all(c(anchors, pool) %in% rownames(A)))
   cache_file <- file.path("out/cache", paste0("erp_matched_", lab, ".rds"))
-  if (file.exists(cache_file)) new <- readRDS(cache_file) else {
+  erp_manifest <- cache_manifest(params = list(algorithm = "erp v1, annotate = match", label = lab, n_complementary = n_comp, n_iter = n_iter,
+                                               iteration_seeds = "1:n_iter", dmm_seed = 314, integerise = "trunc", pool_order = pool_order),
+                                 inputs = list(A = A, anchors = anchors, pool = pool, richness = md$richness[c(anchors, pool)], reference = ref))
+  new <- cache_read(cache_file, erp_manifest)
+  if (is.null(new)) {
     t1 <- Sys.time()
     r <- erp(A, anchors, pool, n_complementary = n_comp, n_iter = n_iter, marker_features = md$marker_features,
              diversity = md$richness, K = 4, iteration_seeds = seq_len(n_iter), dmm_seed = 314,
              annotate = "match", reference = ref, integerise = "trunc", n_cores = n_cores, keep_fits = FALSE, verbose = FALSE)
     new <- list(assignments = r$assignments, flags = r$flags, gap = r$gap, index = r$index, label_map = r$label_map,
                 minutes = as.numeric(difftime(Sys.time(), t1, units = "mins")))
-    saveRDS(new, cache_file); rm(r)
+    cache_write(new, cache_file, erp_manifest); rm(r)
   }
   # same draws as 2022?
   same_draws <- if (is.null(table_ids)) NA_real_ else {

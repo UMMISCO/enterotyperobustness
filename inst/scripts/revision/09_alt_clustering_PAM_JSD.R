@@ -62,13 +62,15 @@ one_draw <- function(i, Q) {
 }
 cache_file <- "out/cache/pam_assignments.rds"
 manifest <- cache_manifest(params = list(fractions = fractions, n_iter = n_iter, K = K, distance = "sqrt JSD, pseudocount 1e-6, renormalised", naming = "rank", pamonce = 5),
-                           inputs = list(ids = rownames(A), groups = groups, dims = dim(A), total = sum(A)))
+                           inputs = list(A = A, groups = groups))
 pam <- cache_read(cache_file, manifest)
 if (is.null(pam)) {
   pam <- list()
   for (Q in fractions) {
     t1 <- Sys.time()
     runs <- parallel::mclapply(seq_len(n_iter), one_draw, Q = Q, mc.cores = n_cores, mc.preschedule = TRUE)
+    failed <- vapply(runs, inherits, logical(1), "try-error")
+    if (any(failed)) stop("Q = ", Q, ": ", sum(failed), " PAM draws failed. First error: ", as.character(runs[[which(failed)[1]]]))
     m <- matrix(NA_character_, nrow(A), n_iter, dimnames = list(rownames(A), paste0("iter", seq_len(n_iter))))
     for (j in seq_len(n_iter)) m[runs[[j]]$ids, j] <- runs[[j]]$labels
     pam[[sprintf("Q%.2f", Q)]] <- list(fraction = Q, assignments = m, collisions = sum(vapply(runs, `[[`, logical(1), "collision")))
@@ -79,7 +81,7 @@ if (is.null(pam)) {
 }
 
 # ---- 3. Robustness per sample and fraction; DMM counterpart from the cache ----------------------
-cache <- readRDS("out/cache/erpm_legacy.rds")
+cache <- load_erpm_cache(mirror)
 freq_int <- function(m) { nd <- rowSums(!is.na(m)); f <- vapply(1:4, function(k) rowSums(m == k, na.rm = TRUE) / nd, numeric(nrow(m)))
   dimnames(f) <- list(rownames(m), ent); f[nd == 0, ] <- NA; attr(f, "n_drawn") <- nd; f }
 rob <- do.call(rbind, lapply(pam, function(p) {

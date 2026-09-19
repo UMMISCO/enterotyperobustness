@@ -36,11 +36,23 @@ earlier ones under `out/`:
 | `09_alt_clustering_PAM_JSD.R` | ERPM repeated with PAM on Jensen-Shannon distance: are ERP-core individuals more robust than ERP-variable ones under a clustering independent of DMM (R1 major 2)? | `METACARDIS_DATA`, `out/cache`, mirror figure objects |
 | `10_alt_K.R` | ERPM with K = 3 and K = 5 DMM components matched to full-cohort reference fits (R1 minor 4). | `METACARDIS_DATA`, `out/cache`, mirror figure objects |
 
-Expensive intermediates are cached under `out/cache/` through `inst/scripts/cache_utils.R`:
-each cache carries a manifest (parameters, fingerprint of the inputs, package,
-DirichletMultinomial and R versions, git commit, date) and is reused only when
-the parameters and inputs match. Caches written before this convention are
-adopted with a warning; the archived deposit must be produced from a clean
-clone without caches. Multiple Wilcoxon tests across fractions are
+`run_all.sh` runs 00 to 10 in order with one log per script under `out/logs/`
+and an MD5 manifest of every output (`out/output_manifest.txt`):
+
+```bash
+ENTEROTYPES_MIRROR=... METACARDIS_DATA=... CACHE_STRICT=1 N_CORES=12 bash inst/scripts/revision/run_all.sh
+```
+
+Expensive intermediates are cached under `out/cache/` through `inst/scripts/cache_utils.R`
+(scripts 00, 03, 08, 09, 10 write them; 02, 05, 06, 07, 09, 10 read the ERPM cache).
+Each cache carries a manifest: parameters with an algorithm version string, an MD5
+fingerprint of the actual inputs (the abundance matrix, sample sets and groups, or the
+2022 files' names, sizes and modification times), the package, DirichletMultinomial
+and R versions, the git commit and the date. A cache is reused only when the
+parameters, the input fingerprint and the DirichletMultinomial version match; a
+different package version or commit is reported and, with `CACHE_STRICT=1` (the
+archival run), refused. A cache without manifest or with a differing one is
+recomputed unless `CACHE_MIGRATE=1` is set, which rewrites its manifest (one-time
+local migration only). The deposit must be produced from a clean clone without `out/`. Multiple Wilcoxon tests across fractions are
 Benjamini-Hochberg adjusted within their family and counted only when the
 direction is the expected one; each script also reports a curve-level test.
