@@ -1,0 +1,94 @@
+---
+title: "Testing enterotype assignment stability with ERP and ERPM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Testing enterotype assignment stability with ERP and ERPM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+Enterotypes are clusters of gut microbiome samples. Whether a given sample
+belongs to one enterotype or another can depend on **which other samples are
+clustered with it**: the clinical composition of the cohort (ERP) and its size
+(ERPM). This package quantifies that dependence for every sample, on any
+abundance table.
+
+The vignette runs on a simulated table so that it builds without cohort data.
+Iteration counts are kept tiny; the paper used 500 iterations per condition.
+
+```{r data}
+library(enterotyperobustness)
+X <- simulate_enterotype_counts(n = 80)
+markers <- c(bacteroides = "Bacteroides", prevotella = "Prevotella")
+richness <- attr(X, "diversity")
+```
+
+## ERP: perturb the composition
+
+An **anchor set** is held fixed and clustered, at every iteration, with a random
+draw of **complementary** samples from a pool. Each anchor sample gets one label
+per iteration; the fraction of iterations giving each label is its assignment
+frequency.
+
+```{r erp}
+anchors <- rownames(X)[1:40]
+pool    <- rownames(X)[41:80]
+res <- erp(X, anchors, pool, n_complementary = 12, n_iter = 5,
+           marker_features = markers, diversity = richness,
+           keep_fits = FALSE, verbose = FALSE)
+res
+freq <- assignment_frequency(res)
+head(freq[anchors, ])
+head(robustness(res))
+```
+
+Two ERP conditions of the same anchors (different pools) give a
+samples x conditions label matrix, from which core (same enterotype in every
+condition) and variable samples follow:
+
+```{r core}
+res2 <- erp(X, anchors, pool[1:20], n_complementary = 12, n_iter = 5,
+            marker_features = markers, diversity = richness,
+            keep_fits = FALSE, verbose = FALSE)
+lab <- labels_by_condition(list(cond1 = res, cond2 = res2))
+table(core_variable(lab)$status)
+```
+
+Because the same anchors appear in every condition, comparisons between
+conditions must be paired: `paired_entropy_test()` (Friedman with post hoc
+tests), `cochran_q_test()` and `anchor_permutation_test()` for the labels, and
+`mixed_entropy_model()` / `multinomial_mixed_test()` for mixed-effects versions.
+
+## ERPM: perturb the size
+
+`erpm()` draws stratified fractions of a cohort and tracks how the assignment
+of each sample stabilises as the fraction grows.
+
+```{r erpm}
+classes <- stats::setNames(c("A", "B")[attr(X, "group") %% 2 + 1], rownames(X))
+resm <- erpm(X, classes, fractions = c(0.5, 0.9), n_iter = 3,
+             marker_features = markers, diversity = richness, verbose = FALSE)
+resm
+rb <- robustness(resm$results[["Q0.90"]])
+bootstrap_ci(rb$robustness, R = 200)
+```
+
+## Annotation and reproduction of the published runs
+
+Components are named after the fit, never before. `annotate = "rank"` is the
+published heuristic (highest mean *Bacteroides* = Bact2, second = Bact1, highest
+*Prevotella* = Prevotella, the rest = Ruminococcus); `annotate = "match"` matches
+component centroids to `reference_centroids()` of a reference fit by
+Jensen-Shannon distance. Annotation checks are returned as flags in
+`res$flags`, never as errors.
+
+With the defaults (`iteration_seeds = 1:n_iter`, `dmm_seed = 314`,
+`integerise = "trunc"`) and the sample IDs in the original order, `erp()` and
+`erpm()` reproduce the draws and fits of the 2022 analyses of the paper. Note
+that `DirichletMultinomial::dmn()` itself is not run-to-run deterministic on
+multimodal data (a few percent of fits can reach a different optimum), so
+iteration-level identity is not guaranteed; aggregates are stable.

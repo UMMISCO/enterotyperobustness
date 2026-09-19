@@ -134,8 +134,9 @@ read_legacy_erp <- function(root, label, folder = NULL, abundance = NULL,
   out$samples <- list(anchors = anchors, complementary = setdiff(all_ids, anchors))
   out$legacy_agreement <- mean(agreement, na.rm = TRUE)
   out$legacy_files <- files[file.exists(files)]
-  out$params <- list(procedure = "ERP (legacy)", label = label, n_iter = n_iter, K = 4,
-                     n_complementary = length(index[[1]]), annotate = "rank (stored)")
+  out$params <- list(procedure = "ERP (legacy)", label = label, n_iter = n_iter, K = 4, seed = 314L,
+                     n_complementary = length(index[[1]]), iteration_seeds = seq_len(n_iter), dmm_seed = 314L,
+                     replace = any(vapply(index, anyDuplicated, integer(1)) > 0), annotate = "rank (stored)")
   class(out) <- c("erp_result", "dmm_iterations")
   out
 }
@@ -194,8 +195,9 @@ read_legacy_erpm <- function(file, marker_features = c(bacteroides = "Bacteroide
   out$legacy_prob_enterotype <- env$Prob_Enterotype
   out$legacy_ties <- env$W_50
   out$abundance <- abundance
-  out$params <- list(procedure = "ERPM (legacy)", file = basename(file), n_iter = n_iter, K = 4,
-                     fraction = out$fraction)
+  out$params <- list(procedure = "ERPM (legacy)", file = basename(file), n_iter = n_iter, K = 4, seed = 314L,
+                     fraction = out$fraction, iteration_seeds = seq_len(n_iter), dmm_seed = 314L,
+                     replace = FALSE, annotate = "rank (stored)")
   class(out) <- c("erpm_fraction", "dmm_iterations")
   out
 }

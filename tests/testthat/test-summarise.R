@@ -72,3 +72,37 @@ test_that("labels_by_condition returns anchors x conditions", {
   expect_equal(dim(lab), c(30, 2))
   expect_true(all(lab %in% enterotype_names()))
 })
+
+test_that("core_variable drops incomplete rows instead of calling them variable", {
+  lab <- rbind(a = c("Bact1", "Bact1", NA), b = c("Bact1", "Bact1", "Bact1"))
+  expect_message(cv <- core_variable(lab, "unanimous"), "dropped")
+  expect_false("a" %in% cv$sample)
+  expect_equal(cv$status[cv$sample == "b"], "core")
+})
+
+test_that("mean_posterior's sd attribute is the sample standard deviation", {
+  mp <- mean_posterior(r)
+  s <- attr(mp, "sd")
+  a <- anchors[1]
+  vals <- vapply(r$posteriors, function(p) p[a, "Bact1"], numeric(1))
+  expect_equal(unname(s[a, "Bact1"]), stats::sd(vals))
+  expect_true(all(is.na(s[attr(assignment_frequency(r), "n_drawn") < 2, ])))
+})
+
+test_that("assignment_entropy ignores extra columns and rejects non-frequencies", {
+  fr <- assignment_frequency(r)[anchors, ]
+  e <- assignment_entropy(fr)
+  expect_identical(assignment_entropy(cbind(fr, n_drawn = 4)), e)
+  expect_error(assignment_entropy(unname(cbind(fr, 7))), "frequencies")   # no enterotype names: every column is checked
+  expect_true(all(e >= 0 & e <= 1))
+})
+
+test_that("assignment_frequency refuses a whole ERPM object with a helpful message", {
+  fake <- structure(list(results = list()), class = "erpm_result")
+  expect_error(assignment_frequency(fake), "one fraction")
+})
+
+test_that("robustness defaults to the seed recorded in the result", {
+  expect_identical(robustness(r), robustness(r, seed = r$params$seed))
+  expect_equal(enterotyperobustness:::result_seed(r), 314L)
+})

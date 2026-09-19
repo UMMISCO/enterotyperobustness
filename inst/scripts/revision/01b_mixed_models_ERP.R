@@ -15,7 +15,8 @@
 #          Figure1C/1F/2C/2F.pdf (LMM brackets), Figure1_BCEF.pdf, Figure2_BCEF.pdf, summary.txt
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 fig <- file.path(mirror, "analyses/9.analyses_mars2026")
 out <- "out/01b_mixed_models"; dir.create(out, showWarnings = FALSE, recursive = TRUE)
 ent_levels <- c("Bact2", "Prevotella", "Ruminococcus", "Bact1")
@@ -60,30 +61,31 @@ label_matrix <- function(d) {
   rownames(lab) <- lab$sample; lab$sample <- NULL; colnames(lab) <- sub("^label\\.", "", colnames(lab))
   m <- as.matrix(lab)[, levels(d$condition)]; mode(m) <- "character"; m
 }
-label_tests <- do.call(rbind, lapply(names(designs), function(k) {
+mixed_fits <- lapply(names(designs), function(k) {        # one fit per design, kept for the coefficient table
   d <- designs[[k]]; lab <- label_matrix(d); ref <- attr(d, "reference")
   r <- multinomial_mixed_test(lab, reference_condition = ref, method = "PQL")
   used <- "mblogit PQL"
   if (!r$converged) { r <- multinomial_mixed_test(lab, reference_condition = ref, method = "MQL"); used <- "mblogit MQL" }
+  list(k = k, lab = lab, ref = ref, r = r, used = used)
+})
+names(mixed_fits) <- names(designs)
+label_tests <- do.call(rbind, lapply(mixed_fits, function(m) {
+  k <- m$k; r <- m$r
   if (r$converged) {
     per <- r$per_enterotype
-    data.frame(design = k, panel = alluvial_panel[[k]], method = used, statistic = r$wald$statistic, df = r$wald$df, p = r$wald$p,
+    data.frame(design = k, panel = alluvial_panel[[k]], method = m$used, statistic = r$wald$statistic, df = r$wald$df, p = r$wald$p,
                detail = paste(sprintf("%s: W=%.1f p_adj=%.2g", per$enterotype, per$statistic, per$p_adj), collapse = "; "),
                messages = paste(r$messages, collapse = " | "))
   } else {
-    pt <- multinomial_permutation_test(lab, reference_condition = ref, n_perm = 999)
+    pt <- multinomial_permutation_test(m$lab, reference_condition = m$ref, n_perm = 999)
     data.frame(design = k, panel = alluvial_panel[[k]], method = "multinom Wald, within-individual permutation (fallback)",
                statistic = pt$statistic, df = pt$df, p = pt$p, detail = sprintf("%d permutations", pt$n_perm),
                messages = paste(r$messages, collapse = " | "))
   }
 }))
 write.csv(label_tests, file.path(out, "mixed_labels.csv"), row.names = FALSE)
-# coefficient tables (log-odds vs own-group condition) where the mixed logit converged
-coef_tables <- lapply(names(designs), function(k) {
-  d <- designs[[k]]; r <- multinomial_mixed_test(label_matrix(d), reference_condition = attr(d, "reference"))
-  if (r$converged) cbind(design = k, r$coefficients) else NULL
-})
-coef_tables <- do.call(rbind, coef_tables)
+# coefficient tables (log-odds vs own-group condition) from the same fits, where the mixed logit converged
+coef_tables <- do.call(rbind, lapply(mixed_fits, function(m) if (m$r$converged) cbind(design = m$k, m$r$coefficients) else NULL))
 if (!is.null(coef_tables)) write.csv(coef_tables, file.path(out, "mixed_labels_coefficients.csv"), row.names = FALSE)
 
 # ---- 3. Three-way comparison with scripts 01 outputs -----------------------------
@@ -101,7 +103,7 @@ if (file.exists(file.path(s01, "legacy_vs_paired.csv"))) {
 }
 
 # ---- 4. Table S4 replacement (LMM contrasts) -------------------------------------
-fmt_p <- function(p) ifelse(is.na(p), "--", ifelse(p < 1e-3, sprintf("$%.2f \\times 10^{%d}$", p / 10^floor(log10(p)), floor(log10(p))), sprintf("%.4f", p)))
+fmt_p <- function(p) ifelse(is.na(p), "--", ifelse(p <= 0, "$<10^{-16}$", ifelse(p < 1e-3, sprintf("$%.2f \\times 10^{%d}$", p / 10^floor(log10(pmax(p, 1e-300))), floor(log10(pmax(p, 1e-300)))), sprintf("%.4f", p))))
 tex <- c("\\begin{longtable}{p{7.2cm}lrrrr}",
   "\\caption{\\textbf{Pairwise differences in anchor entropy between ERP conditions (linear mixed model).}",
   "For each anchor set, entropy was modelled as experiment $\\times$ enterotype with a random intercept per individual;",

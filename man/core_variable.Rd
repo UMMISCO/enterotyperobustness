@@ -14,7 +14,8 @@ core_variable(
 \arguments{
 \item{labels}{Character matrix, samples x conditions, the consensus
 enterotype of each anchor sample in each ERP condition (see
-\code{\link[=labels_by_condition]{labels_by_condition()}}).}
+\code{\link[=labels_by_condition]{labels_by_condition()}}). Samples with a missing label in any condition
+are dropped with a message: the rule is defined on complete rows only.}
 
 \item{rule}{\code{"unanimous"}, \code{"k_minus_1"} or \code{"sd"}.}
 
@@ -37,4 +38,9 @@ enterotypes. Two sensitivity variants are provided for the reviewers:
 criterion described in the submitted Methods (core if the standard deviation
 of each of the four assignment frequencies across conditions is below
 \code{threshold}), which the published figures did not actually use.
+}
+\examples{
+lab <- rbind(a = c("Bact1", "Bact1", "Bact1"), b = c("Bact1", "Bact2", "Bact1"))
+core_variable(lab)                  # a: core Bact1; b: variable for Bact1 and Bact2
+core_variable(lab, "k_minus_1")     # b becomes core Bact1
 }

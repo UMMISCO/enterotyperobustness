@@ -27,10 +27,14 @@ paired_entropy_test(
 sample's enterotype in the reference condition). It must be constant within
 a sample; a per-condition label would break the pairing.}
 
-\item{post_hoc}{\code{"conover"} or \code{"nemenyi"}.}
+\item{post_hoc}{\code{"conover"} (unadjusted pairwise p-values, then \code{p_adjust})
+or \code{"nemenyi"} (the studentised-range p-values are already family-wise, so
+\code{p_adj} equals \code{p}).}
 
-\item{p_adjust}{Method for \code{\link[stats:p.adjust]{stats::p.adjust()}} applied to the pairwise
-p-values within each stratum, and to the omnibus p-values across strata.}
+\item{p_adjust}{Method for \code{\link[stats:p.adjust]{stats::p.adjust()}} applied to the Conover
+pairwise p-values within each stratum, and to the omnibus p-values across
+strata. Strata with fewer than three complete samples are skipped with a
+message.}
 }
 \value{
 A list with \code{omnibus} (one row per stratum: \code{n}, \code{statistic}, \code{df},

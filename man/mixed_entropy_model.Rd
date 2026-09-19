@@ -26,8 +26,10 @@ mixed_entropy_model(
 \item{label}{Optional column: the enterotype assigned to the sample in that
 condition (varies within sample). \code{NULL} for a condition-only model.}
 
-\item{p_adjust}{Method for \code{\link[stats:p.adjust]{stats::p.adjust()}} applied to the pairwise
-p-values within each stratum, and to the omnibus p-values across strata.}
+\item{p_adjust}{Method for \code{\link[stats:p.adjust]{stats::p.adjust()}} applied to the Conover
+pairwise p-values within each stratum, and to the omnibus p-values across
+strata. Strata with fewer than three complete samples are skipped with a
+message.}
 
 \item{rank_check}{Also fit the model on \code{rank(value)} and report its omnibus table.}
 }

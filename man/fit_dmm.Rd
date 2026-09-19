@@ -33,6 +33,11 @@ Thin wrapper around \code{\link[DirichletMultinomial:dmn]{DirichletMultinomial::
 the 2022 analyses left implicit explicit: how non-integer cells are turned
 into counts, and the internal seed of the EM initialisation.
 }
+\examples{
+X <- simulate_enterotype_counts(n = 40)
+fit <- fit_dmm(X, K = 4, seed = 314)
+table(dmm_assign(fit))
+}
 \seealso{
 \code{\link[=dmm_alpha]{dmm_alpha()}}, \code{\link[=dmm_posterior]{dmm_posterior()}}, \code{\link[=dmm_assign]{dmm_assign()}}
 }

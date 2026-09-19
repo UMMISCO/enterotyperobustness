@@ -88,17 +88,31 @@ jsd_matrix <- function(A, B) {
 #' @keywords internal
 enterotype_names <- function() c("Bact1", "Bact2", "Prevotella", "Ruminococcus")
 
+#' Seed the RNG for the calling function only (internal)
+#'
+#' Sets the seed for the rest of the caller's frame and restores the caller's
+#' `.Random.seed` on exit (or removes it if none existed), so that no exported
+#' function leaves the user's random stream in a different state.
+#' @keywords internal
+local_seed <- function(seed, envir = parent.frame()) {
+  had <- exists(".Random.seed", envir = globalenv(), inherits = FALSE)
+  old <- if (had) get(".Random.seed", envir = globalenv(), inherits = FALSE) else NULL
+  restore <- function() {
+    if (had) assign(".Random.seed", old, envir = globalenv())
+    else if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) rm(".Random.seed", envir = globalenv())
+  }
+  do.call(on.exit, list(bquote(.(restore)()), add = TRUE), envir = envir)
+  set.seed(seed)
+  invisible(NULL)
+}
+
 #' Row-wise argmax with a seeded random tie-break
 #'
 #' @return A list with `index` (column index per row, NA for all-NA rows) and
 #'   `tie` (logical, whether the maximum was tied).
 #' @keywords internal
 argmax_rows <- function(m, seed = NULL) {
-  if (!is.null(seed)) {
-    old <- if (exists(".Random.seed", envir = globalenv())) get(".Random.seed", envir = globalenv()) else NULL
-    on.exit(if (!is.null(old)) assign(".Random.seed", old, envir = globalenv()), add = TRUE)
-    set.seed(seed)
-  }
+  if (!is.null(seed)) local_seed(seed)
   idx <- rep(NA_integer_, nrow(m)); tie <- rep(FALSE, nrow(m))
   for (i in seq_len(nrow(m))) {
     r <- m[i, ]
@@ -148,4 +162,18 @@ union_counts <- function(abundance, ids, diversity = NULL) {
   div <- if (is.null(diversity)) NULL else stats::setNames(diversity[ids], rownames(X))
   keep <- !duplicated(ids)
   list(counts = X, diversity = div, keep = keep, ids_unique = ids[keep])
+}
+
+#' Check that a diversity vector covers a set of sample IDs (internal)
+#' @keywords internal
+check_diversity <- function(diversity, ids) {
+  if (is.null(diversity)) return(invisible(NULL))
+  if (!is.numeric(diversity) || is.null(names(diversity))) stop("`diversity` must be a numeric vector named by sample ID.")
+  miss <- setdiff(ids, names(diversity))
+  if (length(miss)) {
+    stop(length(miss), " sample(s) have no `diversity` value, e.g. ", miss[1],
+         ". A missing value would silently flag every iteration containing the sample.")
+  }
+  if (anyNA(diversity[ids])) stop("`diversity` is NA for ", sum(is.na(diversity[ids])), " sample(s).")
+  invisible(NULL)
 }

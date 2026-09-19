@@ -8,7 +8,7 @@ stratified_subsample(
   classes,
   fraction,
   seed,
-  class_order = sort(unique(as.character(classes))),
+  class_order = sort(unique(as.character(classes)), method = "radix"),
   replace = FALSE
 )
 }
@@ -22,9 +22,12 @@ ID}. Samples without a name are an error.}
 number for ERPM iterations and 505 for the sub-cohorts of Supplementary
 Figure S3.}
 
-\item{class_order}{Order in which classes are drawn. The default,
-\code{sort(unique(classes))}, reproduces the 2022 order for the MetaCardis
-groups (\verb{"1" < "1 RH" < "2a" < "2b" < "3" < ... < "8"}).}
+\item{class_order}{Order in which classes are drawn. The default sorts the
+class labels in the C locale (\code{sort(..., method = "radix")}, independent of
+the session locale) and reproduces the 2022 order for the MetaCardis
+groups (\verb{"1" < "1 RH" < "2a" < "2b" < "3" < ... < "8"}). The within-class
+draw order follows the order of \code{names(classes)} (bioclinical row order in
+the 2022 runs), so that order matters for reproduction too.}
 
 \item{replace}{Sample with replacement (never in the published analyses).}
 }
@@ -37,4 +40,8 @@ as the 2022 ERPM scripts did: the total is \code{round(fraction * N)}, the quota
 of class \emph{g} is \code{round(p_g * total)} with \code{p_g} the class proportion, and
 classes are drawn one after another in \code{class_order} (the random stream is
 shared, so the order matters for reproduction).
+}
+\examples{
+classes <- stats::setNames(rep(c("1", "2a", "2b"), c(10, 6, 4)), sprintf("s\%02d", 1:20))
+stratified_subsample(classes, 0.5, seed = 1)
 }

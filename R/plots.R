@@ -29,6 +29,7 @@ plot_entropy <- function(data, sample = "sample", condition = "condition", value
   if (!requireNamespace("ggplot2", quietly = TRUE)) stop("Package ggplot2 is needed.")
   d <- data
   d$.stratum <- if (is.null(stratum)) "all" else d[[stratum]]
+  if (is.null(stratum) && !"all" %in% names(colours)) colours <- c(colours, all = "grey60")
   d$.cond <- if (is.null(condition_levels)) factor(d[[condition]]) else factor(d[[condition]], levels = condition_levels)
   agg <- stats::aggregate(d[[value]], by = list(stratum = d$.stratum, condition = d$.cond),
                           FUN = function(v) c(mean = mean(v), se = stats::sd(v) / sqrt(length(v)), n = length(v)))
@@ -137,7 +138,7 @@ plot_robustness <- function(ci, colours = enterotype_colours(), ylab = "mean rob
     ggplot2::geom_line() + ggplot2::geom_point(size = 1) +
     ggplot2::scale_colour_manual(values = cols) + ggplot2::scale_fill_manual(values = cols) +
     ggplot2::geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey40") +
-    ggplot2::scale_y_continuous(limits = c(NA, 1)) +
+    ggplot2::coord_cartesian(ylim = c(min(ci$lower, na.rm = TRUE), 1)) +   # clip, never drop, ribbon pieces above 1
     ggplot2::labs(x = xlab, y = ylab, colour = NULL, fill = NULL) +
     ggplot2::theme_bw()
   if ("facet" %in% names(ci)) p <- p + ggplot2::facet_wrap(~facet, nrow = 1)

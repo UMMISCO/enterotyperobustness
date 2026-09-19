@@ -5,7 +5,8 @@
 suppressMessages(pkgload::load_all(".", quiet = TRUE))
 args <- commandArgs(trailingOnly = TRUE); n_cores <- if (length(args)) as.integer(args[1]) else 10L
 obj <- readRDS("out/reproduce_check/objects.rds"); prev <- obj$new
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 e <- new.env(); load(file.path(mirror, "analyses/2.Estimating_DMM/Article/Experiments/Healthy-Healthy_TotalEnvironment.RData"), envir = e)
 abundance <- e$Remaining_Dataset
 t0 <- Sys.time()

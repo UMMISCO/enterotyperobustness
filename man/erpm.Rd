@@ -43,8 +43,8 @@ dropped with a message; samples of \code{abundance} without a class are ignored.
 
 \item{K}{Number of DMM components (4).}
 
-\item{seed}{Master seed, used only for tie-breaking in downstream summaries
-and recorded in \code{params}.}
+\item{seed}{Tie-breaking seed recorded in \code{params} and used by default by
+\code{\link[=robustness]{robustness()}}, \code{\link[=labels_by_condition]{labels_by_condition()}} and \code{\link[=merge_pairs]{merge_pairs()}} on this result.}
 
 \item{iteration_seeds}{Integer vector of length \code{n_iter}: the seed of each
 iteration's draw. The default \code{1:n_iter} reproduces the 2022 runs.}
@@ -88,6 +88,15 @@ the paper).
 The Supplementary Figure S3 sub-cohorts are obtained by drawing the
 sub-cohort first (\code{stratified_subsample(classes, M, seed = 505)}) and calling
 \code{erpm()} on \code{abundance[sub, ]} with \code{classes[sub]}.
+}
+\examples{
+X <- simulate_enterotype_counts(n = 60)
+classes <- stats::setNames(c("A", "B")[attr(X, "group") \%\% 2 + 1], rownames(X))
+res <- erpm(X, classes, fractions = c(0.5, 0.8), n_iter = 2,
+            marker_features = c(bacteroides = "Bacteroides", prevotella = "Prevotella"),
+            verbose = FALSE)
+res
+head(robustness(res$results[["Q0.80"]]))
 }
 \seealso{
 \code{\link[=erp]{erp()}}, \code{\link[=robustness]{robustness()}}, \code{\link[=merge_pairs]{merge_pairs()}}

@@ -19,9 +19,13 @@
 #' @param stratum Optional column name; a **per-sample** grouping (e.g. the
 #'   sample's enterotype in the reference condition). It must be constant within
 #'   a sample; a per-condition label would break the pairing.
-#' @param post_hoc `"conover"` or `"nemenyi"`.
-#' @param p_adjust Method for [stats::p.adjust()] applied to the pairwise
-#'   p-values within each stratum, and to the omnibus p-values across strata.
+#' @param post_hoc `"conover"` (unadjusted pairwise p-values, then `p_adjust`)
+#'   or `"nemenyi"` (the studentised-range p-values are already family-wise, so
+#'   `p_adj` equals `p`).
+#' @param p_adjust Method for [stats::p.adjust()] applied to the Conover
+#'   pairwise p-values within each stratum, and to the omnibus p-values across
+#'   strata. Strata with fewer than three complete samples are skipped with a
+#'   message.
 #' @return A list with `omnibus` (one row per stratum: `n`, `statistic`, `df`,
 #'   `p`, `p_adj`) and `pairwise` (one row per stratum and pair: `cond1`,
 #'   `cond2`, `p`, `p_adj`).
@@ -31,6 +35,13 @@ paired_entropy_test <- function(data, sample = "sample", condition = "condition"
                                 post_hoc = c("conover", "nemenyi"), p_adjust = "BH") {
   post_hoc <- match.arg(post_hoc)
   if (!requireNamespace("PMCMRplus", quietly = TRUE)) stop("Package PMCMRplus is needed.")
+  if (!is.null(stratum)) {
+    k <- tapply(data[[stratum]], data[[sample]], function(v) length(unique(v)))
+    if (any(k > 1)) {
+      stop("`stratum` varies within sample for ", sum(k > 1), " sample(s); use a per-sample ",
+           "stratum (e.g. the reference-condition label), or mixed_entropy_model() for a per-condition label.")
+    }
+  }
   strata <- if (is.null(stratum)) list(all = data) else split(data, data[[stratum]])
   omni <- list(); pairs <- list()
   for (s in names(strata)) {
@@ -40,7 +51,10 @@ paired_entropy_test <- function(data, sample = "sample", condition = "condition"
     rownames(wide) <- wide[[sample]]; wide[[sample]] <- NULL
     colnames(wide) <- sub(paste0("^", value, "\\."), "", colnames(wide))
     wide <- as.matrix(wide[stats::complete.cases(wide), , drop = FALSE])
-    if (nrow(wide) < 3 || ncol(wide) < 2) next
+    if (nrow(wide) < 3 || ncol(wide) < 2) {
+      message("Stratum ", s, " skipped: ", nrow(wide), " complete sample(s) in ", ncol(wide), " condition(s).")
+      next
+    }
     ft <- stats::friedman.test(wide)
     omni[[s]] <- data.frame(stratum = s, n = nrow(wide), statistic = unname(ft$statistic),
                             df = unname(ft$parameter), p = ft$p.value)
@@ -51,9 +65,10 @@ paired_entropy_test <- function(data, sample = "sample", condition = "condition"
     rows <- which(!is.na(pm), arr.ind = TRUE)
     pw <- data.frame(stratum = s, cond1 = rownames(pm)[rows[, 1]], cond2 = colnames(pm)[rows[, 2]],
                      p = pm[rows], stringsAsFactors = FALSE)
-    pw$p_adj <- stats::p.adjust(pw$p, method = p_adjust)
+    pw$p_adj <- if (post_hoc == "conover") stats::p.adjust(pw$p, method = p_adjust) else pw$p
     pairs[[s]] <- pw
   }
+  if (!length(omni)) stop("No stratum with at least three complete samples.")
   omni <- do.call(rbind, omni); rownames(omni) <- NULL
   omni$p_adj <- stats::p.adjust(omni$p, method = p_adjust)
   pairs <- do.call(rbind, pairs); rownames(pairs) <- NULL
@@ -70,10 +85,13 @@ paired_entropy_test <- function(data, sample = "sample", condition = "condition"
 #'   [labels_by_condition()].
 #' @param enterotype The label to test.
 #' @param p_adjust Method for the pairwise p-values.
-#' @return A list with `test` (statistic, df, p, prevalence per condition) and
-#'   `pairwise` (McNemar p and adjusted p per pair).
+#' @return A list with `test` (enterotype, n complete samples, statistic, df,
+#'   p), `prevalence` (per condition) and `pairwise` (McNemar p and adjusted p
+#'   per pair). Samples with a missing label in any condition are dropped.
 #' @export
 cochran_q_test <- function(labels, enterotype, p_adjust = "BH") {
+  labels <- labels[stats::complete.cases(labels), , drop = FALSE]
+  if (nrow(labels) < 2) stop("Fewer than two samples with a label in every condition.")
   ind <- (labels == enterotype) * 1
   ft <- stats::friedman.test(ind)
   conds <- colnames(labels)
@@ -126,7 +144,7 @@ anchor_permutation_test <- function(labels, n_perm = 9999, seed = 314, p_adjust 
   }
   obs <- counts(labels); dimnames(obs) <- list(conds, lev)
   o <- chisq_stat(obs); res_obs <- std_resid(obs, o$E)
-  set.seed(seed)
+  local_seed(seed)
   stat_perm <- numeric(n_perm); res_ge <- matrix(0, k, length(lev))
   m <- labels
   for (b in seq_len(n_perm)) {
@@ -152,15 +170,21 @@ anchor_permutation_test <- function(labels, n_perm = 9999, seed = 314, p_adjust 
 #' @param R Bootstrap replicates.
 #' @param type `"bca"` or `"percentile"`.
 #' @param conf Confidence level.
-#' @param seed Seed.
+#' @param seed Seed (the caller's random stream is restored on exit).
 #' @return Named numeric: `mean`, `lower`, `upper`, `n`.
+#' @details The interval describes the between-sample spread of the values in
+#'   `x` (samples resampled as independent units). It does not capture the
+#'   Monte-Carlo variability of the iterations that produced each value; for
+#'   that, bootstrap over iterations (see `inst/scripts/revision/02_bootstrap_CI_ERPM.R`).
+#' @examples
+#' bootstrap_ci(c(1, 0.9, 1, 0.8, 1, 1, 0.95, 1, 0.7, 1), R = 500)
 #' @export
 bootstrap_ci <- function(x, R = 2000, type = c("bca", "percentile"), conf = 0.95, seed = 314) {
   type <- match.arg(type)
   x <- x[!is.na(x)]; n <- length(x)
   if (n < 2 || length(unique(x)) == 1) return(c(mean = mean(x), lower = mean(x), upper = mean(x), n = n))
   if (!requireNamespace("boot", quietly = TRUE)) stop("Package boot is needed.")
-  set.seed(seed)
+  local_seed(seed)
   b <- boot::boot(x, function(d, i) mean(d[i]), R = R)
   boot_type <- c(bca = "bca", percentile = "perc")[[type]]     # boot.ci's own spelling
   ci <- tryCatch(boot::boot.ci(b, conf = conf, type = boot_type), error = function(e) NULL)

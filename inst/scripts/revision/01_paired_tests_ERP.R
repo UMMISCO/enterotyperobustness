@@ -18,7 +18,8 @@
 #          legacy_vs_paired.csv, Fig1C.pdf Fig1F.pdf Fig2C.pdf Fig2F.pdf, summary.txt
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 fig <- file.path(mirror, "analyses/9.analyses_mars2026")
 out <- "out/01_paired_tests"; dir.create(out, showWarnings = FALSE, recursive = TRUE)
 ent_levels <- c("Bact2", "Prevotella", "Ruminococcus", "Bact1")
@@ -68,7 +69,7 @@ tab_s4$stratum <- factor(tab_s4$stratum, levels = ent_levels); tab_s4 <- tab_s4[
 write.csv(tab_s4, file.path(out, "tableS4_paired.csv"), row.names = FALSE)
 
 # LaTeX longtable in the layout of the current Supplementary Table S4
-fmt_p <- function(p) ifelse(p < 1e-3, sprintf("$%.2f \\times 10^{%d}$", p / 10^floor(log10(p)), floor(log10(p))), sprintf("%.4f", p))
+fmt_p <- function(p) ifelse(is.na(p), "--", ifelse(p <= 0, "$<10^{-16}$", ifelse(p < 1e-3, sprintf("$%.2f \\times 10^{%d}$", p / 10^floor(log10(pmax(p, 1e-300))), floor(log10(pmax(p, 1e-300)))), sprintf("%.4f", p))))
 tex <- c("\\begin{longtable}{p{7.5cm}lrrr}",
   "\\caption{\\textbf{Paired comparisons of anchor entropy across ERP conditions.}",
   "For each anchor set and each enterotype (the anchor's enterotype when clustered with its own clinical group),",

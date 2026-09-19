@@ -10,8 +10,9 @@ mean_posterior(x)
 \item{x}{An \code{erp_result} or \code{erpm_fraction}.}
 }
 \value{
-A samples x 4 matrix, plus attribute \code{sd} with the per-cell standard
-deviation across iterations.
+A samples x 4 matrix, plus attribute \code{sd} with the per-cell sample
+standard deviation (denominator n - 1, as \code{\link[stats:sd]{stats::sd()}}) across the
+iterations in which the sample was drawn; \code{NA} when drawn fewer than twice.
 }
 \description{
 The average of the per-iteration posterior component probabilities (columns

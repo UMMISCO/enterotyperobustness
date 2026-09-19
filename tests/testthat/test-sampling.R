@@ -27,3 +27,15 @@ test_that("the paper's fraction grid has 55 values", {
   expect_length(f, 55)
   expect_equal(range(f), c(0.05, 0.95))
 })
+
+test_that("stratified_subsample sorts classes in the C locale and rejects duplicated IDs", {
+  cl <- stats::setNames(rep(c("b", "A", "a"), 5), sprintf("s%02d", 1:15))
+  expect_identical(formals(stratified_subsample)$class_order, quote(sort(unique(as.character(classes)), method = "radix")))
+  expect_identical(sort(unique(cl), method = "radix"), c("A", "a", "b"))
+  d1 <- stratified_subsample(cl, 0.6, seed = 1)
+  d2 <- stratified_subsample(cl, 0.6, seed = 1, class_order = c("A", "a", "b"))
+  expect_identical(d1, d2)
+  dup <- c(cl, s01 = "b")
+  expect_error(stratified_subsample(dup, 0.5, seed = 1), "duplicated")
+  expect_error(stratified_subsample(cl, 0.5, seed = 1, class_order = c("a", "b")), "every class")
+})

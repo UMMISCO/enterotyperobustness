@@ -17,7 +17,8 @@
 #          CI_comparison.pdf, summary.txt
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 fig <- file.path(mirror, "analyses/9.analyses_mars2026")
 out <- "out/02_bootstrap_CI"; dir.create(out, showWarnings = FALSE, recursive = TRUE)
 cache <- readRDS("out/cache/erpm_legacy.rds")

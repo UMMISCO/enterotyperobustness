@@ -53,8 +53,8 @@ with \code{cohort_size}.}
 
 \item{K}{Number of DMM components (4).}
 
-\item{seed}{Master seed, used only for tie-breaking in downstream summaries
-and recorded in \code{params}.}
+\item{seed}{Tie-breaking seed recorded in \code{params} and used by default by
+\code{\link[=robustness]{robustness()}}, \code{\link[=labels_by_condition]{labels_by_condition()}} and \code{\link[=merge_pairs]{merge_pairs()}} on this result.}
 
 \item{iteration_seeds}{Integer vector of length \code{n_iter}: the seed of each
 iteration's draw. The default \code{1:n_iter} reproduces the 2022 runs.}
@@ -110,6 +110,17 @@ the same order as the 2022 scripts, the function reproduces the published
 experiments. Each ERP condition of the paper was one call: the healthy
 anchor (142 IDs) with a pool of healthy, obese, T2D, statin- or
 metformin-stratified samples and \code{n_complementary = 86}.
+}
+\examples{
+X <- simulate_enterotype_counts(n = 60)
+markers <- c(bacteroides = "Bacteroides", prevotella = "Prevotella")
+anchors <- rownames(X)[1:30]; pool <- rownames(X)[31:60]
+res <- erp(X, anchors, pool, n_complementary = 10, n_iter = 3,
+           marker_features = markers, diversity = attr(X, "diversity"),
+           keep_fits = FALSE, verbose = FALSE)
+res
+head(assignment_frequency(res))
+head(robustness(res))
 }
 \seealso{
 \code{\link[=erpm]{erpm()}}, \code{\link[=assignment_frequency]{assignment_frequency()}}, \code{\link[=robustness]{robustness()}}, \code{\link[=core_variable]{core_variable()}}

@@ -20,3 +20,8 @@ it to each enterotype. This is the quantity the paper calls "posterior
 probability" and plots in every figure; it is an empirical frequency, not a
 DMM posterior (for that see \code{\link[=mean_posterior]{mean_posterior()}}).
 }
+\examples{
+a <- rbind(s1 = c("Bact1", "Bact1", NA), s2 = c("Bact2", "Bact1", "Bact2"))
+assignment_frequency(a)
+assignment_entropy(assignment_frequency(a))
+}

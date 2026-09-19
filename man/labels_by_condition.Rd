@@ -7,7 +7,7 @@
 labels_by_condition(
   results,
   samples = results[[1]]$samples$anchors,
-  seed = 314
+  seed = NULL
 )
 }
 \arguments{
@@ -16,7 +16,8 @@ labels_by_condition(
 
 \item{samples}{Which samples to keep (default: the anchors of the first result).}
 
-\item{seed}{Tie-breaking seed passed to \code{\link[=robustness]{robustness()}}.}
+\item{seed}{Tie-breaking seed passed to \code{\link[=robustness]{robustness()}}; \code{NULL} uses each
+result's own recorded seed.}
 }
 \value{
 A samples x conditions character matrix.

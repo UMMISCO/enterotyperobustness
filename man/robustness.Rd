@@ -4,13 +4,14 @@
 \alias{robustness}
 \title{Consensus enterotype and robustness of every sample}
 \usage{
-robustness(x, seed = 314)
+robustness(x, seed = result_seed(x))
 }
 \arguments{
 \item{x}{An \code{erp_result}, an \code{erpm_fraction}, or a samples x iterations
 character matrix with \code{NA} where a sample was not drawn.}
 
-\item{seed}{Seed for tie-breaking.}
+\item{seed}{Seed for tie-breaking. Default: the \code{seed} recorded in \code{x$params}
+when \code{x} is a result object, 314 otherwise.}
 }
 \value{
 A data frame with \code{sample}, \code{enterotype}, \code{robustness}, \code{n_drawn}, \code{tie}.

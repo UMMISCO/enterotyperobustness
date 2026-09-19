@@ -9,9 +9,17 @@
 #'   character matrix with `NA` where a sample was not drawn.
 #' @return A samples x 4 numeric matrix (rows sum to 1; `NA` rows for samples
 #'   never drawn), with attribute `n_drawn`.
+#' @examples
+#' a <- rbind(s1 = c("Bact1", "Bact1", NA), s2 = c("Bact2", "Bact1", "Bact2"))
+#' assignment_frequency(a)
+#' assignment_entropy(assignment_frequency(a))
 #' @export
 assignment_frequency <- function(x) {
+  if (inherits(x, "erpm_result")) {
+    stop("`x` is a whole ERPM result; call assignment_frequency() on one fraction, e.g. x$results[[1]].")
+  }
   a <- if (is.matrix(x)) x else x$assignments
+  if (!is.matrix(a) || !is.character(a)) stop("`x` must be an erp_result, an erpm_fraction or a character matrix.")
   n_drawn <- rowSums(!is.na(a))
   freq <- vapply(enterotype_names(), function(e) rowSums(a == e, na.rm = TRUE) / n_drawn,
                  numeric(nrow(a)))
@@ -28,10 +36,14 @@ assignment_frequency <- function(x) {
 #' after normalisation).
 #'
 #' @param freq A samples x K frequency matrix, e.g. from [assignment_frequency()].
+#'   If it has the four enterotype columns, only those are used, whatever else
+#'   is bound to it.
 #' @param base Logarithm base.
 #' @return A named numeric vector.
 #' @export
 assignment_entropy <- function(freq, base = 2) {
+  if (all(enterotype_names() %in% colnames(freq))) freq <- freq[, enterotype_names(), drop = FALSE]
+  if (any(freq < 0, na.rm = TRUE) || any(freq > 1, na.rm = TRUE)) stop("`freq` must hold frequencies in [0, 1].")
   K <- ncol(freq)
   plogp <- function(p) ifelse(p > 0, p * log(p, base), 0)
   h <- -rowSums(plogp(freq)) / log(K, base)
@@ -46,10 +58,11 @@ assignment_entropy <- function(freq, base = 2) {
 #' paper's Supplementary Tables S2 and S3 is `sum(tie)`).
 #'
 #' @inheritParams assignment_frequency
-#' @param seed Seed for tie-breaking.
+#' @param seed Seed for tie-breaking. Default: the `seed` recorded in `x$params`
+#'   when `x` is a result object, 314 otherwise.
 #' @return A data frame with `sample`, `enterotype`, `robustness`, `n_drawn`, `tie`.
 #' @export
-robustness <- function(x, seed = 314) {
+robustness <- function(x, seed = result_seed(x)) {
   freq <- if (is.matrix(x) && is.numeric(x)) x else assignment_frequency(x)
   am <- argmax_rows(freq, seed = seed)
   n_drawn <- attr(freq, "n_drawn")
@@ -70,8 +83,9 @@ robustness <- function(x, seed = 314) {
 #' posterior probability" literally describes.
 #'
 #' @param x An `erp_result` or `erpm_fraction`.
-#' @return A samples x 4 matrix, plus attribute `sd` with the per-cell standard
-#'   deviation across iterations.
+#' @return A samples x 4 matrix, plus attribute `sd` with the per-cell sample
+#'   standard deviation (denominator n - 1, as [stats::sd()]) across the
+#'   iterations in which the sample was drawn; `NA` when drawn fewer than twice.
 #' @export
 mean_posterior <- function(x) {
   samples <- rownames(x$assignments)
@@ -84,7 +98,8 @@ mean_posterior <- function(x) {
     n[ids] <- n[ids] + 1
   }
   m <- acc / n
-  v <- acc2 / n - m^2
+  v <- (acc2 - n * m^2) / (n - 1)
+  v[n < 2, ] <- NA_real_
   m[n == 0, ] <- NA_real_
   attr(m, "sd") <- sqrt(pmax(v, 0))
   m
@@ -104,18 +119,28 @@ mean_posterior <- function(x) {
 #'
 #' @param labels Character matrix, samples x conditions, the consensus
 #'   enterotype of each anchor sample in each ERP condition (see
-#'   [labels_by_condition()]).
+#'   [labels_by_condition()]). Samples with a missing label in any condition
+#'   are dropped with a message: the rule is defined on complete rows only.
 #' @param rule `"unanimous"`, `"k_minus_1"` or `"sd"`.
 #' @param frequencies For `rule = "sd"`: a list, one samples x 4 frequency
 #'   matrix per condition (same row order as `labels`).
 #' @param threshold For `rule = "sd"`.
 #' @return A data frame with `sample`, `enterotype`, `status` (`core` or
 #'   `variable`) and, for `"sd"`, `max_sd`.
+#' @examples
+#' lab <- rbind(a = c("Bact1", "Bact1", "Bact1"), b = c("Bact1", "Bact2", "Bact1"))
+#' core_variable(lab)                  # a: core Bact1; b: variable for Bact1 and Bact2
+#' core_variable(lab, "k_minus_1")     # b becomes core Bact1
 #' @export
 core_variable <- function(labels, rule = c("unanimous", "k_minus_1", "sd"),
                           frequencies = NULL, threshold = 0.2) {
   rule <- match.arg(rule)
   if (!is.matrix(labels)) stop("`labels` must be a samples x conditions character matrix.")
+  incomplete <- !stats::complete.cases(labels)
+  if (any(incomplete)) {
+    message(sum(incomplete), " sample(s) without a label in every condition dropped from core_variable().")
+    labels <- labels[!incomplete, , drop = FALSE]
+  }
   k <- ncol(labels)
   if (rule %in% c("unanimous", "k_minus_1")) {
     need <- if (rule == "unanimous") k else k - 1
@@ -132,9 +157,11 @@ core_variable <- function(labels, rule = c("unanimous", "k_minus_1", "sd"),
     return(out)
   }
   if (is.null(frequencies)) stop("`rule = \"sd\"` needs `frequencies`.")
-  arr <- simplify2array(lapply(frequencies, function(f) f[rownames(labels), enterotype_names()]))
+  arr <- simplify2array(lapply(frequencies, function(f) f[rownames(labels), enterotype_names(), drop = FALSE]))
+  if (length(dim(arr)) != 3) stop("`frequencies` must be a list of samples x 4 matrices, one per condition.")
   sds <- apply(arr, c(1, 2), stats::sd)                    # samples x 4
   means <- apply(arr, c(1, 2), mean)
+  if (anyNA(means)) stop("`frequencies` contain NA for ", sum(rowSums(is.na(means)) > 0), " sample(s).")
   max_sd <- apply(sds, 1, max)
   data.frame(sample = rownames(labels),
              enterotype = enterotype_names()[apply(means, 1, which.max)],
@@ -147,13 +174,14 @@ core_variable <- function(labels, rule = c("unanimous", "k_minus_1", "sd"),
 #' @param results Named list of `erp_result` objects sharing the same anchors
 #'   (one per condition).
 #' @param samples Which samples to keep (default: the anchors of the first result).
-#' @param seed Tie-breaking seed passed to [robustness()].
+#' @param seed Tie-breaking seed passed to [robustness()]; `NULL` uses each
+#'   result's own recorded seed.
 #' @return A samples x conditions character matrix.
 #' @export
-labels_by_condition <- function(results, samples = results[[1]]$samples$anchors, seed = 314) {
+labels_by_condition <- function(results, samples = results[[1]]$samples$anchors, seed = NULL) {
   if (is.null(names(results))) stop("`results` must be a named list (one name per condition).")
   m <- sapply(results, function(r) {
-    rb <- robustness(r, seed = seed)
+    rb <- if (is.null(seed)) robustness(r) else robustness(r, seed = seed)
     stats::setNames(rb$enterotype, rb$sample)[samples]
   })
   m <- matrix(m, length(samples), length(results), dimnames = list(samples, names(results)))
@@ -198,4 +226,11 @@ merge_pairs <- function(freq, pairs = list(c("Bact1", "Bact2"), c("Prevotella", 
              pair = ifelse(is.na(which_pair), NA_character_, pair_names[which_pair]),
              value = ifelse(is.na(which_pair), NA_real_, sums[cbind(seq_len(nrow(sums)), which_pair)]),
              tie = tie, stringsAsFactors = FALSE, row.names = NULL)
+}
+
+#' Tie-breaking seed recorded in a result object (internal)
+#' @keywords internal
+result_seed <- function(x) {
+  s <- if (is.list(x) && !is.null(x$params$seed)) x$params$seed else 314
+  as.integer(s)
 }

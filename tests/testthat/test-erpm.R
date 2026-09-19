@@ -23,3 +23,13 @@ test_that("fits can be spilled to disk", {
   expect_true(file.exists(file.path(d, "fits_Q0.50.rds")))
   expect_null(r$results[[1]]$fits)
 })
+
+test_that("erpm rejects duplicated sample IDs in classes and prints its fractions", {
+  cl <- stats::setNames(rep(c("a", "b"), 10), rownames(X)[1:20])
+  dup <- c(cl, stats::setNames("a", rownames(X)[1]))
+  expect_error(erpm(X, dup, fractions = 0.5, n_iter = 1, marker_features = markers, verbose = FALSE), "duplicated")
+  r <- erpm(X, cl, fractions = 0.9, n_iter = 2, marker_features = markers, verbose = FALSE)
+  expect_s3_class(r$results[[1]], "erpm_fraction")
+  expect_output(print(r$results[[1]]), "ERPM fraction 0.9")
+  expect_equal(r$results[[1]]$params$seed, 314)
+})

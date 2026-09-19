@@ -67,3 +67,41 @@ test_that("legacy_chisq matches chisq.test on the stacked table", {
   expect_equal(r$statistic, unname(ref$statistic))
   expect_equal(nrow(r$cells), 4)
 })
+
+test_that("paired_entropy_test refuses a stratum that varies within sample", {
+  skip_if_not_installed("PMCMRplus")
+  bad <- long
+  bad$stratum[bad$condition == "C" & bad$sample %in% sprintf("s%02d", 1:10)] <- "Bact2"   # 10 samples change stratum in C
+  expect_error(paired_entropy_test(bad, stratum = "stratum"), "varies within sample")
+})
+
+test_that("Nemenyi p-values are family-wise already and are not adjusted twice", {
+  skip_if_not_installed("PMCMRplus")
+  r <- paired_entropy_test(long, post_hoc = "nemenyi")
+  expect_identical(r$pairwise$p_adj, r$pairwise$p)
+  rc <- paired_entropy_test(long, post_hoc = "conover")
+  expect_true(all(rc$pairwise$p_adj >= rc$pairwise$p))
+})
+
+test_that("cochran_q_test drops incomplete samples and reports the n it used", {
+  lab <- cbind(A = rep(c("Bact1", "Bact2"), 10), B = rep(c("Bact1", "Bact2", "Bact2", "Bact1"), 5))
+  rownames(lab) <- sprintf("s%02d", 1:20)
+  lab2 <- lab; lab2[1, "B"] <- NA
+  r <- cochran_q_test(lab2, "Bact2")
+  expect_equal(r$test$n, 19)
+  expect_equal(r$test$statistic, cochran_q_test(lab[-1, ], "Bact2")$test$statistic)
+})
+
+test_that("seeded functions leave the caller's random stream untouched", {
+  skip_if_not_installed("boot")
+  lab <- cbind(A = rep(c("Bact1", "Bact2", "Prevotella"), 10), B = rep(c("Bact2", "Bact1", "Prevotella"), 10))
+  rownames(lab) <- sprintf("s%02d", 1:30)
+  x <- stats::runif(20)
+  set.seed(2024); ref <- stats::runif(3)
+  set.seed(2024)
+  invisible(bootstrap_ci(x, R = 200))
+  invisible(anchor_permutation_test(lab, n_perm = 20))
+  invisible(draw_complementary(letters, 5, seed = 1))
+  invisible(stratified_subsample(stats::setNames(rep(c("a", "b"), 10), sprintf("s%02d", 1:20)), 0.5, seed = 1))
+  expect_identical(stats::runif(3), ref)
+})

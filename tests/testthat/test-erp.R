@@ -58,3 +58,17 @@ test_that("p_complementary + cohort_size gives the paper's counts", {
   expect_error(erp(X, anchors, pool, n_iter = 1, marker_features = markers), "n_complementary")
   expect_error(erp(X, anchors, c(pool, anchors[1]), 5, n_iter = 1, marker_features = markers), "both")
 })
+
+test_that("a diversity vector that misses a sample is an error, not a silent flag", {
+  expect_error(erp(X, anchors, pool, 12, n_iter = 2, marker_features = markers,
+                   diversity = div[-1], verbose = FALSE, keep_fits = FALSE), "no `diversity` value")
+  fit <- fit_dmm(X[1:40, ], K = 4, seed = 1)
+  expect_error(annotate_clusters(fit, X[1:40, ], markers, diversity = div[-1]), "no `diversity` value")
+})
+
+test_that("erp does not disturb the caller's random stream", {
+  set.seed(77); ref <- stats::runif(2)
+  set.seed(77)
+  invisible(erp(X, anchors, pool, 12, n_iter = 2, marker_features = markers, verbose = FALSE, keep_fits = FALSE))
+  expect_identical(stats::runif(2), ref)
+})

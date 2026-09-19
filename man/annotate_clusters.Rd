@@ -76,3 +76,11 @@ In both cases the annotation \strong{checks} of the original are computed and
 returned as flags, never as errors: whether \code{Bact2} has the lowest mean
 \code{diversity} and \code{Ruminococcus} the highest, plus any \code{extra_checks}.
 }
+\examples{
+X <- simulate_enterotype_counts(n = 40)
+fit <- fit_dmm(X, K = 4, seed = 314)
+ann <- annotate_clusters(fit, X, c(bacteroides = "Bacteroides", prevotella = "Prevotella"),
+                         diversity = attr(X, "diversity"))
+ann$component_names
+ann$flags
+}

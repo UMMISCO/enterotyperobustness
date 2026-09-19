@@ -7,7 +7,9 @@
 assignment_entropy(freq, base = 2)
 }
 \arguments{
-\item{freq}{A samples x K frequency matrix, e.g. from \code{\link[=assignment_frequency]{assignment_frequency()}}.}
+\item{freq}{A samples x K frequency matrix, e.g. from \code{\link[=assignment_frequency]{assignment_frequency()}}.
+If it has the four enterotype columns, only those are used, whatever else
+is bound to it.}
 
 \item{base}{Logarithm base.}
 }

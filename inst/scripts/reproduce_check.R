@@ -20,7 +20,8 @@ suppressMessages({
 })
 args <- commandArgs(trailingOnly = TRUE)
 n_cores <- if (length(args)) as.integer(args[1]) else 10L
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 exp_dir <- file.path(mirror, "analyses/2.Estimating_DMM/Article/Experiments")
 out_dir <- file.path("out", "reproduce_check"); dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 

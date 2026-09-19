@@ -5,7 +5,8 @@ suppressMessages(pkgload::load_all(".", quiet = TRUE))
 obj <- readRDS("out/reproduce_check/objects.rds")
 rep <- readRDS("out/reproduce_check/report.rds")
 new <- obj$new
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 e <- new.env(); load(file.path(mirror, "analyses/2.Estimating_DMM/Article/Experiments/Healthy-Healthy_TotalEnvironment.RData"), envir = e)
 abundance <- e$Remaining_Dataset; anchors <- new$samples$anchors; comp <- new$samples$complementary
 iters <- c(head(rep$nle_cmp$iteration, 12), 1:8)          # 12 differing + 8 identical iterations

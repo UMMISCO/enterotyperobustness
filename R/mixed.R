@@ -37,14 +37,19 @@ mixed_entropy_model <- function(data, sample = "sample", condition = "condition"
   msgs <- character(0)
   m <- withCallingHandlers(
     lmerTest::lmer(f, data = d, REML = TRUE),
-    warning = function(w) { msgs <<- c(msgs, conditionMessage(w)); invokeRestart("muffleWarning") })
+    warning = function(w) { msgs <<- c(msgs, conditionMessage(w)); invokeRestart("muffleWarning") },
+    message = function(m) { msgs <<- c(msgs, trimws(conditionMessage(m))); invokeRestart("muffleMessage") })
   conv <- m@optinfo$conv$lme4$messages
   converged <- is.null(conv) || length(conv) == 0
   omni <- as.data.frame(stats::anova(m, type = 3, ddf = "Satterthwaite"))
   omni <- data.frame(term = gsub("\\.cond", "condition", gsub("\\.lab", "label", rownames(omni))),
                      F = omni[["F value"]], NumDF = omni$NumDF, DenDF = omni$DenDF,
                      p = omni[["Pr(>F)"]], row.names = NULL)
-  emm <- if (is.null(label)) emmeans::emmeans(m, ~ .cond) else emmeans::emmeans(m, ~ .cond | .lab)
+  # Satterthwaite df explicitly: emmeans would otherwise switch to Kenward-Roger
+  # whenever pbkrtest happens to be installed, and the contrasts would not match
+  # the omnibus table (nor the caption of the paper's table).
+  emm <- if (is.null(label)) emmeans::emmeans(m, ~ .cond, lmer.df = "satterthwaite") else
+    emmeans::emmeans(m, ~ .cond | .lab, lmer.df = "satterthwaite")
   ct <- as.data.frame(emmeans::contrast(emm, method = "pairwise", adjust = "none"))
   split_pair <- function(x) {
     x <- gsub("[()]", "", as.character(x))
@@ -57,6 +62,7 @@ mixed_entropy_model <- function(data, sample = "sample", condition = "condition"
                    estimate = ct$estimate, se = ct$SE, df = ct$df, t = ct$t.ratio, p = ct$p.value,
                    stringsAsFactors = FALSE)
   pw$p_adj <- stats::ave(pw$p, pw$stratum, FUN = function(v) stats::p.adjust(v, method = p_adjust))
+  if (anyNA(pw$p)) msgs <- c(msgs, sprintf("%d pairwise contrast(s) not estimable (empty condition x label cell)", sum(is.na(pw$p))))
   vc <- as.data.frame(lme4::VarCorr(m))
   v_id <- vc$vcov[vc$grp == ".id"]; v_res <- vc$vcov[vc$grp == "Residual"]
   out <- list(model = m,
@@ -165,21 +171,27 @@ multinomial_mixed_test <- function(labels, reference_condition = colnames(labels
 #' @param n_perm Number of permutations.
 #' @param seed Seed.
 #' @return A list with `statistic`, `df`, `p`, `n_perm`, `coefficients`.
+#'   Works with two or more distinct labels (with two, `multinom` is a binary
+#'   logit and its coefficients are handled as a one-row matrix).
 #' @export
 multinomial_permutation_test <- function(labels, reference_condition = colnames(labels)[1],
                                          reference_enterotype = "Bact1", n_perm = 999, seed = 314) {
   if (!requireNamespace("nnet", quietly = TRUE)) stop("Package nnet is needed.")
+  if (length(unique(stats::na.omit(as.vector(labels)))) < 2) stop("`labels` has fewer than two distinct labels.")
   d <- long_labels(labels, reference_condition, reference_enterotype)
   stat <- function(dd) {
     fit <- nnet::multinom(label ~ condition, data = dd, trace = FALSE, maxit = 500)
-    b <- as.vector(t(stats::coef(fit))); nm <- as.vector(t(outer(rownames(stats::coef(fit)), colnames(stats::coef(fit)), paste, sep = ":")))
+    cf <- stats::coef(fit)
+    if (is.null(dim(cf))) cf <- matrix(cf, 1, dimnames = list(levels(dd$label)[2], names(cf)))
+    b <- as.vector(t(cf)); nm <- as.vector(t(outer(rownames(cf), colnames(cf), paste, sep = ":")))
     V <- stats::vcov(fit)
     sel <- grepl("condition", nm)
+    if (!any(sel)) stop("No `condition` coefficient in the multinomial fit.")
     W <- tryCatch(as.numeric(t(b[sel]) %*% solve(V[sel, sel]) %*% b[sel]), error = function(e) NA_real_)
     list(W = W, df = sum(sel), coef = stats::setNames(b, nm))
   }
   obs <- stat(d)
-  set.seed(seed)
+  local_seed(seed)
   k <- ncol(labels); n <- nrow(labels)
   perm <- vapply(seq_len(n_perm), function(b) {
     m <- labels

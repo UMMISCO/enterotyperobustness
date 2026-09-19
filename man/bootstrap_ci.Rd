@@ -21,7 +21,7 @@ bootstrap_ci(
 
 \item{conf}{Confidence level.}
 
-\item{seed}{Seed.}
+\item{seed}{Seed (the caller's random stream is restored on exit).}
 }
 \value{
 Named numeric: \code{mean}, \code{lower}, \code{upper}, \code{n}.
@@ -29,4 +29,13 @@ Named numeric: \code{mean}, \code{lower}, \code{upper}, \code{n}.
 \description{
 Replaces the normal-approximation interval of the submitted manuscript for
 robustness scores, which are bounded in [0, 1] and pile up near 1.
+}
+\details{
+The interval describes the between-sample spread of the values in
+\code{x} (samples resampled as independent units). It does not capture the
+Monte-Carlo variability of the iterations that produced each value; for
+that, bootstrap over iterations (see \verb{inst/scripts/revision/02_bootstrap_CI_ERPM.R}).
+}
+\examples{
+bootstrap_ci(c(1, 0.9, 1, 0.8, 1, 1, 0.95, 1, 0.7, 1), R = 500)
 }

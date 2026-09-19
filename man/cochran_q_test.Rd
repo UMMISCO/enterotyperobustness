@@ -15,8 +15,9 @@ cochran_q_test(labels, enterotype, p_adjust = "BH")
 \item{p_adjust}{Method for the pairwise p-values.}
 }
 \value{
-A list with \code{test} (statistic, df, p, prevalence per condition) and
-\code{pairwise} (McNemar p and adjusted p per pair).
+A list with \code{test} (enterotype, n complete samples, statistic, df,
+p), \code{prevalence} (per condition) and \code{pairwise} (McNemar p and adjusted p
+per pair). Samples with a missing label in any condition are dropped.
 }
 \description{
 Cochran's Q is the Friedman test on a binary outcome; it tests whether the

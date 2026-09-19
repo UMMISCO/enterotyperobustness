@@ -15,6 +15,10 @@
 #' @seealso [dmm_alpha()], [dmm_posterior()], [dmm_assign()]
 #' @importFrom DirichletMultinomial dmn mixture fitted
 #' @importFrom stats setNames sd
+#' @examples
+#' X <- simulate_enterotype_counts(n = 40)
+#' fit <- fit_dmm(X, K = 4, seed = 314)
+#' table(dmm_assign(fit))
 #' @export
 fit_dmm <- function(counts, K = 4, seed = 314,
                     integerise = c("trunc", "round", "none"), verbose = FALSE) {

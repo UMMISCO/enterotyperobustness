@@ -66,3 +66,29 @@ test_that("multinomial_permutation_test returns a valid p-value and detects the 
   expect_true(r$p > 0 && r$p <= 1)
   expect_lt(r$p, 0.05)
 })
+
+test_that("multinomial_permutation_test handles a two-label design (binary logit)", {
+  skip_if_not_installed("nnet")
+  set.seed(5)
+  two <- cbind(Own = rep(c("Bact1", "Bact2"), 20),
+               B = rep(c("Bact1", "Bact2"), 20),
+               C = sample(rep(c("Bact1", "Bact2"), 20)))
+  rownames(two) <- sprintf("s%02d", 1:40)
+  r <- multinomial_permutation_test(two, reference_condition = "Own", n_perm = 99)
+  expect_true(is.finite(r$statistic))
+  expect_equal(r$df, 2)                                   # 2 non-reference conditions x 1 logit
+  expect_true(r$p > 0 && r$p <= 1)
+  expect_length(r$coefficients, 3)
+  one <- two; one[] <- "Bact1"
+  expect_error(multinomial_permutation_test(one, reference_condition = "Own", n_perm = 9), "fewer than two")
+})
+
+test_that("mixed_entropy_model uses Satterthwaite df for the contrasts, whatever emmeans' default", {
+  skip_if_not_installed("lme4"); skip_if_not_installed("lmerTest"); skip_if_not_installed("emmeans")
+  m <- mixed_entropy_model(long, label = "label")
+  d <- data.frame(.y = long$entropy, .cond = factor(long$condition), .lab = factor(long$label), .id = factor(long$sample))
+  fit <- lmerTest::lmer(.y ~ .cond * .lab + (1 | .id), data = d, REML = TRUE)
+  ct <- as.data.frame(emmeans::contrast(emmeans::emmeans(fit, ~ .cond | .lab, lmer.df = "satterthwaite"), "pairwise", adjust = "none"))
+  expect_equal(m$pairwise$df, ct$df, tolerance = 1e-8)
+  expect_equal(m$pairwise$p, ct$p.value, tolerance = 1e-8)
+})

@@ -24,7 +24,8 @@
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
 source("inst/scripts/metacardis_data.R")
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 exp_dir <- file.path(mirror, "analyses/2.Estimating_DMM/Article/Experiments")
 fig <- file.path(mirror, "analyses/9.analyses_mars2026")
 out <- "out/03_cluster_matching"; dir.create(out, showWarnings = FALSE, recursive = TRUE); dir.create("out/cache", showWarnings = FALSE)
@@ -146,7 +147,8 @@ cat("03/04  Cluster matching and Bacteroides gap, run", format(Sys.time()), "\n"
 fit_min <- attr(ref, "fit_time_min"); if (is.null(fit_min)) fit_min <- NA_real_
 cat(sprintf("reference fit: %d samples, K = 4, seed 314, %.1f min; components %s\n\n", nrow(A), fit_min, paste(ref_ann$component_names, collapse = "/")))
 cat("Per experiment: name->component map identical (rank vs matched), ARI, relative Bacteroides gap, JSD Bact1-Bact2 vs closest other pair:\n")
-s <- aggregate(cbind(map_identical, ari, bact_gap_relative, jsd_bact1_bact2, jsd_min_other_pair, flagged_2022) ~ experiment, iters, mean)
+s <- aggregate(cbind(map_identical, ari, bact_gap_relative, jsd_bact1_bact2, jsd_min_other_pair, flagged_2022) ~ experiment, iters,
+               function(v) mean(v, na.rm = TRUE), na.action = stats::na.pass)   # flagged_2022 is NA where no WARNING file exists
 s$gap_below_0.1 <- aggregate(bact_gap_relative ~ experiment, iters, function(v) mean(v < 0.1))$bact_gap_relative
 print(s, row.names = FALSE, digits = 3)
 cat("\nAmong iterations whose maps differ: mean relative gap vs identical-map iterations:\n")

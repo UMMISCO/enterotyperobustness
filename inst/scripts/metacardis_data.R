@@ -8,8 +8,10 @@
 #   d$richness    gene richness at 10 M reads, named by sample
 #   d$groups      clinical group PATGROUPFINAL_C (column 162 of the bioclinical table), named by sample
 #   d$bioclin     the full bioclinical table (2 214 rows; 2 022 have mOTU data)
-load_metacardis_data <- function(path = Sys.getenv("METACARDIS_DATA",
-                                                   "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES/data/mcdb.sub.26122022.Rda")) {
+load_metacardis_data <- function(path = Sys.getenv("METACARDIS_DATA")) {
+  if (!nzchar(path) || !file.exists(path)) {
+    stop("Set METACARDIS_DATA to the path of the MetaCardis master object (private, not distributed).")
+  }
   e <- new.env(); load(path, envir = e)
   m <- e$mcdb.sub
   g <- m$metagenomics$taxcomp$motu$scaled$down10$genus

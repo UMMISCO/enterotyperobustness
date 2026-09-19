@@ -6,7 +6,8 @@ suppressMessages(pkgload::load_all(".", quiet = TRUE))
 prev <- readRDS("out/reproduce_check/objects.rds")$new
 r32 <- readRDS("out/reproduce_check/run3_vs_run2.rds")
 bad <- which(r32$post_diff > 1e-8)
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 e <- new.env(); load(file.path(mirror, "analyses/2.Estimating_DMM/Article/Experiments/Healthy-Healthy_TotalEnvironment.RData"), envir = e)
 A <- e$Remaining_Dataset; anchors <- prev$samples$anchors; comp <- prev$samples$complementary
 mk <- c(bacteroides = "Bacteroides", prevotella = "Prevotella")

@@ -49,6 +49,13 @@
 #'   to Bact2) and the Prevotella margin, or the matching cost and margin for
 #'   `"match"`;
 #' * `group_means`: components x markers matrix of the means used.
+#' @examples
+#' X <- simulate_enterotype_counts(n = 40)
+#' fit <- fit_dmm(X, K = 4, seed = 314)
+#' ann <- annotate_clusters(fit, X, c(bacteroides = "Bacteroides", prevotella = "Prevotella"),
+#'                          diversity = attr(X, "diversity"))
+#' ann$component_names
+#' ann$flags
 #' @export
 annotate_clusters <- function(fit, counts, marker_features, diversity = NULL,
                               method = c("rank", "match"), reference = NULL,
@@ -122,7 +129,7 @@ annotate_clusters <- function(fit, counts, marker_features, diversity = NULL,
 
   flags <- data.frame(empty_component = any(empty))
   if (!is.null(diversity)) {
-    if (is.null(names(diversity))) stop("`diversity` must be named by sample ID.")
+    check_diversity(diversity, rownames(counts))
     div <- vapply(members, function(rows) {
       if (!length(rows)) return(NA_real_)
       mean(diversity[rownames(counts)[rows]])

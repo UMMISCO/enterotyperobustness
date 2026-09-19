@@ -13,9 +13,11 @@
 #          comparison_with_submitted.csv, excluded_iterations_healthy.csv, summary.txt
 # ------------------------------------------------------------------------------
 suppressMessages(pkgload::load_all(".", quiet = TRUE))
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 art <- file.path(mirror, "analyses/2.Estimating_DMM/Article")
-tex_file <- Sys.getenv("SUPPLEMENTAL_TEX", "/Users/jdz/ARTICLES EN COURS/OVERLEAF-PAPERS/2026-ScientificReports-Enterotypes/scientific_reports_Enterotypes/sections/supplemental.tex")
+tex_file <- Sys.getenv("SUPPLEMENTAL_TEX")          # optional: the manuscript's supplemental.tex, for the comparison with the submitted tables
+if (!nzchar(tex_file)) message("SUPPLEMENTAL_TEX not set: the comparison with the submitted tables is skipped.")
 out <- "out/05_anomaly_tables"; dir.create(out, showWarnings = FALSE, recursive = TRUE)
 read_warning <- function(f) { w <- utils::read.table(f, header = TRUE, stringsAsFactors = FALSE); w[, paste0("V", 1:5)] != "0" }
 count_flags <- function(w) c(BACT2 = sum(w[, 1]), RUM = sum(w[, 2]), n_iter = nrow(w))
@@ -92,7 +94,7 @@ writeLines(c(tex3, "\\bottomrule", "\\end{tabular}"), file.path(out, "tableS3.te
 
 # ---- 4. Comparison with the submitted tables (parsed from supplemental.tex) ------------------
 cmp <- NULL
-if (file.exists(tex_file)) {
+if (nzchar(tex_file) && file.exists(tex_file)) {
   tx <- readLines(tex_file)
   cells <- function(line) trimws(strsplit(sub("\\\\\\\\.*$", "", line), "&")[[1]])
   # S1

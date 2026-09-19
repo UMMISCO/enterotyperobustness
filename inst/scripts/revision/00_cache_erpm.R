@@ -15,7 +15,8 @@
 #   samples     : the 2 022 sample IDs
 # ------------------------------------------------------------------------------
 suppressMessages(pkgload::load_all(".", quiet = TRUE))
-mirror <- Sys.getenv("ENTEROTYPES_MIRROR", "/Users/jdz/PROGRAMMATION/R/ENTEROTYPES")
+mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
+if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 conf <- file.path(mirror, "analyses/2.Estimating_DMM/Article/Confidence")
 dir.create("out/cache", showWarnings = FALSE, recursive = TRUE)
 files <- sort(list.files(conf, pattern = "_TotalEnvironment\\.RData$", full.names = TRUE))

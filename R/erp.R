@@ -30,8 +30,8 @@
 #' @param n_iter Number of iterations (500 in the paper).
 #' @param marker_features,diversity,extra_checks Passed to [annotate_clusters()].
 #' @param K Number of DMM components (4).
-#' @param seed Master seed, used only for tie-breaking in downstream summaries
-#'   and recorded in `params`.
+#' @param seed Tie-breaking seed recorded in `params` and used by default by
+#'   [robustness()], [labels_by_condition()] and [merge_pairs()] on this result.
 #' @param iteration_seeds Integer vector of length `n_iter`: the seed of each
 #'   iteration's draw. The default `1:n_iter` reproduces the 2022 runs.
 #' @param dmm_seed Seed passed to `dmn()` in every iteration (314 in the paper).
@@ -58,6 +58,16 @@
 #' * `fits`: the `DMN` objects, or `NULL`;
 #' * `samples`: list with `anchors` and `complementary`;
 #' * `params`: every argument that determines the result.
+#' @examples
+#' X <- simulate_enterotype_counts(n = 60)
+#' markers <- c(bacteroides = "Bacteroides", prevotella = "Prevotella")
+#' anchors <- rownames(X)[1:30]; pool <- rownames(X)[31:60]
+#' res <- erp(X, anchors, pool, n_complementary = 10, n_iter = 3,
+#'            marker_features = markers, diversity = attr(X, "diversity"),
+#'            keep_fits = FALSE, verbose = FALSE)
+#' res
+#' head(assignment_frequency(res))
+#' head(robustness(res))
 #' @seealso [erpm()], [assignment_frequency()], [robustness()], [core_variable()]
 #' @export
 erp <- function(abundance, anchors, complementary,
@@ -82,6 +92,7 @@ erp <- function(abundance, anchors, complementary,
     n_complementary <- round(p_complementary * cohort_size)
   }
   if (length(iteration_seeds) != n_iter) stop("`iteration_seeds` must have length `n_iter`.")
+  check_diversity(diversity, c(anchors, complementary))
   replace <- match.arg(replace)
   annotate <- match.arg(annotate)
   integerise <- match.arg(integerise)
@@ -159,7 +170,11 @@ run_dmm_iterations <- function(abundance, id_list, K, dmm_seed, integerise,
     lapply(seq_len(n_iter), one)
   }
   failed <- vapply(runs, inherits, logical(1), "try-error")
-  if (any(failed)) stop("Iteration(s) failed: ", paste(which(failed), collapse = ", "))
+  if (any(failed)) {
+    first <- which(failed)[1]
+    stop("Iteration(s) failed: ", paste(which(failed), collapse = ", "),
+         ". First error: ", trimws(as.character(runs[[first]])))
+  }
   if (verbose) message("Done in ", format(round(difftime(Sys.time(), t0, units = "mins"), 1)), ".")
   runs
 }
