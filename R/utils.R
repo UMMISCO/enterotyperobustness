@@ -10,16 +10,27 @@ check_abundance <- function(abundance) {
   if (!is.matrix(abundance) || !is.numeric(abundance)) {
     stop("`abundance` must be a numeric matrix (samples in rows, features in columns).")
   }
+  if (nrow(abundance) == 0 || ncol(abundance) == 0) stop("`abundance` has zero rows or zero columns.")
   if (is.null(rownames(abundance)) || is.null(colnames(abundance))) {
     stop("`abundance` needs row names (sample IDs) and column names (feature names).")
   }
   if (anyDuplicated(rownames(abundance))) {
     stop("`abundance` has duplicated sample IDs in its row names.")
   }
-  if (any(abundance < 0, na.rm = TRUE) || anyNA(abundance)) {
-    stop("`abundance` must be non-negative and complete (no NA).")
+  if (anyDuplicated(colnames(abundance))) stop("`abundance` has duplicated feature names in its column names.")
+  if (any(!is.finite(abundance)) || any(abundance < 0)) {
+    stop("`abundance` must be non-negative, finite and complete (no NA, NaN or Inf).")
   }
   abundance
+}
+
+#' Validate a positive integer scalar (internal)
+#' @keywords internal
+check_count <- function(x, what, min = 1) {
+  if (!is.numeric(x) || length(x) != 1 || !is.finite(x) || x != round(x) || x < min) {
+    stop(sprintf("`%s` must be a single integer >= %d.", what, min))
+  }
+  as.integer(x)
 }
 
 #' Validate a vector of sample IDs against an abundance matrix

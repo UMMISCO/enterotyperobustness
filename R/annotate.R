@@ -68,6 +68,18 @@ annotate_clusters <- function(fit, counts, marker_features, diversity = NULL,
   if (length(comp) != nrow(counts)) {
     stop("`counts` does not have one row per sample of `fit`.")
   }
+  # `counts` must be the fitted table in the fitted order: the MAP components are
+  # positional. Sample and feature names are checked whenever the fit carries them
+  # (duplicated sample IDs of with-replacement draws are made unique as union_counts() does).
+  fit_ids <- rownames(dmm_posterior(fit))
+  if (!is.null(fit_ids) && !identical(make.unique(unname(fit_ids)), make.unique(unname(rownames(counts))))) {
+    first <- which(make.unique(unname(fit_ids)) != make.unique(unname(rownames(counts))))[1]
+    stop("`counts` rows are not the samples of `fit` in the fitted order (first difference at row ", first, ").")
+  }
+  fit_feats <- rownames(dmm_alpha(fit))
+  if (!is.null(fit_feats) && !identical(unname(fit_feats), unname(colnames(counts)))) {
+    stop("`counts` columns are not the features of `fit` in the fitted order.")
+  }
   need <- c("bacteroides", "prevotella")
   if (!all(need %in% names(marker_features))) {
     stop("`marker_features` must name at least `bacteroides` and `prevotella`.")

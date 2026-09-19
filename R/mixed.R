@@ -170,14 +170,19 @@ multinomial_mixed_test <- function(labels, reference_condition = colnames(labels
 #' @inheritParams multinomial_mixed_test
 #' @param n_perm Number of permutations.
 #' @param seed Seed.
-#' @return A list with `statistic`, `df`, `p`, `n_perm`, `coefficients`.
+#' @return A list with `statistic`, `df`, `p`, `n` (complete samples),
+#'   `n_perm` (valid permutations, the denominator of `p`), `coefficients`.
 #'   Works with two or more distinct labels (with two, `multinom` is a binary
-#'   logit and its coefficients are handled as a one-row matrix).
+#'   logit and its coefficients are handled as a one-row matrix). Samples with
+#'   a missing label in any condition are dropped before permuting; the test
+#'   stops if more than 5 % of the permuted fits fail.
 #' @export
 multinomial_permutation_test <- function(labels, reference_condition = colnames(labels)[1],
                                          reference_enterotype = "Bact1", n_perm = 999, seed = 314) {
   if (!requireNamespace("nnet", quietly = TRUE)) stop("Package nnet is needed.")
-  if (length(unique(stats::na.omit(as.vector(labels)))) < 2) stop("`labels` has fewer than two distinct labels.")
+  labels <- labels[stats::complete.cases(labels), , drop = FALSE]
+  if (nrow(labels) < 2) stop("Fewer than two samples with a label in every condition.")
+  if (length(unique(as.vector(labels))) < 2) stop("`labels` has fewer than two distinct labels.")
   d <- long_labels(labels, reference_condition, reference_enterotype)
   stat <- function(dd) {
     fit <- nnet::multinom(label ~ condition, data = dd, trace = FALSE, maxit = 500)
@@ -196,10 +201,13 @@ multinomial_permutation_test <- function(labels, reference_condition = colnames(
   perm <- vapply(seq_len(n_perm), function(b) {
     m <- labels
     for (i in seq_len(n)) m[i, ] <- labels[i, sample.int(k)]
-    stat(long_labels(m, reference_condition, reference_enterotype))$W
+    tryCatch(stat(long_labels(m, reference_condition, reference_enterotype))$W, error = function(e) NA_real_)
   }, numeric(1))
-  list(statistic = obs$W, df = obs$df, p = (1 + sum(perm >= obs$W, na.rm = TRUE)) / (1 + n_perm),
-       n_perm = n_perm, coefficients = obs$coef)
+  valid <- sum(!is.na(perm))
+  if (valid < 0.95 * n_perm) stop(n_perm - valid, " of ", n_perm, " permuted fits failed; the permutation distribution is not usable.")
+  if (is.na(obs$W)) stop("The observed Wald statistic is not finite (singular covariance).")
+  list(statistic = obs$W, df = obs$df, p = (1 + sum(perm >= obs$W, na.rm = TRUE)) / (1 + valid),
+       n = n, n_perm = valid, coefficients = obs$coef)
 }
 
 #' Long data frame from a samples x conditions label matrix (internal)

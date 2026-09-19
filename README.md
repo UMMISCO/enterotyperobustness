@@ -30,7 +30,8 @@ cv  <- core_variable(lab, rule = "unanimous")
 
 The defaults reproduce the 2022 runs: anchor drawn with `set.seed(314)` and 50 %
 of its cohort (done by the caller; the MetaCardis loader is
-`inst/scripts/metacardis_data.R`, and the full re-run script is planned), one
+`inst/scripts/metacardis_data.R`; a single orchestrating script for the whole
+2022 design, `run_metacardis.R`, is not yet written), one
 draw per iteration with `set.seed(i)`, `dmn(..., seed = 314)`, non-integer cells
 **truncated** (`integerise = "trunc"`, what DirichletMultinomial 1.28 did
 silently), rank annotation. `n_complementary` is the integer the original

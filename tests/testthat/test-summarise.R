@@ -106,3 +106,13 @@ test_that("robustness defaults to the seed recorded in the result", {
   expect_identical(robustness(r), robustness(r, seed = r$params$seed))
   expect_equal(enterotyperobustness:::result_seed(r), 314L)
 })
+
+test_that("input validation: entropy rows must sum to 1, pairs must be disjoint, core_variable may be empty", {
+  fr <- assignment_frequency(r)[anchors, ]
+  bad <- fr; bad[1, "Bact1"] <- bad[1, "Bact1"] + 0.6
+  expect_error(assignment_entropy(bad), "sum to 1")
+  expect_error(merge_pairs(fr, pairs = list(c("Bact1", "Bact2"), c("Bact2", "Prevotella", "Ruminococcus"))), "disjoint")
+  lab <- rbind(a = c("Bact1", NA)); 
+  expect_message(cv <- core_variable(lab), "dropped")
+  expect_s3_class(cv, "data.frame"); expect_equal(nrow(cv), 0)
+})

@@ -7,7 +7,9 @@
 legacy_chisq(labels, p_adjust = "BH")
 }
 \arguments{
-\item{labels}{Character matrix, samples x conditions.}
+\item{labels}{Character matrix, samples x conditions. Samples with a
+missing label in any condition are dropped (complete cases), so that the
+within-sample permutation never moves a missing value between conditions.}
 
 \item{p_adjust}{Method for the cell-level p-values.}
 }

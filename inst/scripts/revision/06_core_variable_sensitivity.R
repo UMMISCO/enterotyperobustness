@@ -86,7 +86,24 @@ fig3b <- do.call(rbind, lapply(names(cls), function(r) {
   }))
 }))
 fig3b$rule <- factor(fig3b$rule, levels = names(cls))
+# one family per rule (fractions x enterotypes): BH within family, and the direction is checked
+fig3b$p_adj <- stats::ave(fig3b$p_wilcoxon, fig3b$rule, FUN = function(v) { a <- v; ok <- !is.na(v); a[ok] <- stats::p.adjust(v[ok], "BH"); a })
+fig3b$core_higher_adj <- !is.na(fig3b$p_adj) & fig3b$p_adj < 0.05 & fig3b$difference > 0
 write.csv(fig3b, file.path(out, "fig3B_by_rule.csv"), row.names = FALSE)
+# curve-level test, one per rule and enterotype: each sample's robustness averaged over the 55 fractions
+rob_all <- do.call(rbind, lapply(names(rob), function(k) cbind(fraction = cache$fractions$fraction[cache$fractions$file == k], rob[[k]])))
+curve_test <- do.call(rbind, lapply(names(cls), function(r) {
+  st <- cls[[r]]; st <- st[!duplicated(st[, c("sample", "enterotype")]), ]
+  do.call(rbind, lapply(ent, function(e) {
+    x <- rob_all[rob_all$enterotype == e, ]; per_sample <- tapply(x$robustness, x$sample, mean)
+    rc <- per_sample[names(per_sample) %in% st$sample[st$enterotype == e & st$status == "core"]]
+    rv <- per_sample[names(per_sample) %in% st$sample[st$enterotype == e & st$status == "variable"]]
+    data.frame(rule = r, enterotype = e, n_core = length(rc), n_variable = length(rv), mean_core = mean(rc), mean_variable = mean(rv),
+               difference = mean(rc) - mean(rv), p_wilcoxon = if (length(rc) >= 3 && length(rv) >= 3) stats::wilcox.test(rc, rv, exact = FALSE)$p.value else NA)
+  }))
+}))
+curve_test$p_adj <- stats::ave(curve_test$p_wilcoxon, curve_test$rule, FUN = function(v) { a <- v; ok <- !is.na(v); a[ok] <- stats::p.adjust(v[ok], "BH"); a })
+write.csv(curve_test, file.path(out, "fig3B_curve_level.csv"), row.names = FALSE)
 
 # ---- 4. Figure and summary ----------------------------------------------------------------------
 long <- rbind(data.frame(fig3b[, c("rule", "fraction", "enterotype")], status = "core", mean = fig3b$mean_core),
@@ -98,7 +115,8 @@ p <- ggplot(long, aes(fraction, mean, colour = status)) + geom_line() + geom_poi
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, size = 6))
 ggsave(file.path(out, "Figure3B_sensitivity.pdf"), p, width = 18, height = 9)
 q95 <- aggregate(fraction ~ rule + enterotype, fig3b[fig3b$mean_core >= 0.95, ], min)
-sig <- aggregate(p_wilcoxon ~ rule + enterotype, fig3b, function(v) sprintf("%d/%d", sum(v < 0.05, na.rm = TRUE), sum(!is.na(v))))
+sig <- aggregate(cbind(core_higher_adj, tested = !is.na(p_wilcoxon)) ~ rule + enterotype, fig3b, sum, na.action = stats::na.pass)
+sig$count <- sprintf("%d/%d", sig$core_higher_adj, sig$tested); sig <- sig[, c("rule", "enterotype", "count")]
 sink(file.path(out, "summary.txt"))
 cat("06  Core / variable sensitivity, run", format(Sys.time()), "\n\n")
 cat("Entries per rule (union of the three anchors) and agreement with the published rule on shared (sample, enterotype) pairs:\n")
@@ -106,7 +124,9 @@ print(overlap, row.names = FALSE, digits = 3)
 cat("\nCore / variable counts per anchor and enterotype:\n"); print(counts, row.names = FALSE)
 cat("\nFirst fraction at which mean core robustness reaches 0.95, per rule and enterotype:\n")
 print(stats::reshape(q95, idvar = "rule", timevar = "enterotype", direction = "wide"), row.names = FALSE)
-cat("\nFractions (of 55) at which core > variable robustness is significant (Wilcoxon p < 0.05):\n")
+cat("\nCurve-level test per rule and enterotype (each sample's robustness averaged over the 55 fractions; BH within rule):\n")
+print(curve_test, row.names = FALSE, digits = 3)
+cat("\nFractions (of 55) at which core > variable (difference > 0 and BH-adjusted p < 0.05 within rule):\n")
 print(stats::reshape(sig, idvar = "rule", timevar = "enterotype", direction = "wide"), row.names = FALSE)
 cat("\nMean difference core - variable at Q = 0.25 / 0.50 / 0.75:\n")
 print(fig3b[fig3b$fraction %in% c(0.25, 0.5, 0.75), c("rule", "fraction", "enterotype", "n_core", "n_variable", "difference")], row.names = FALSE, digits = 3)

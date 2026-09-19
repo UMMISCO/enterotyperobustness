@@ -33,3 +33,11 @@ test_that("erpm rejects duplicated sample IDs in classes and prints its fraction
   expect_output(print(r$results[[1]]), "ERPM fraction 0.9")
   expect_equal(r$results[[1]]$params$seed, 314)
 })
+
+test_that("erpm rejects fractions that collide at two decimals and non-integer settings", {
+  cl <- stats::setNames(rep(c("a", "b"), 10), rownames(X)[1:20])
+  expect_error(erpm(X, cl, fractions = c(0.501, 0.504), n_iter = 1, marker_features = markers, verbose = FALSE), "collide")
+  expect_error(erpm(X, cl, fractions = 1.2, n_iter = 1, marker_features = markers, verbose = FALSE), "\\(0, 1\\]")
+  expect_error(erpm(X, cl, fractions = 0.5, n_iter = 0, marker_features = markers, verbose = FALSE), "n_iter")
+  expect_error(erp(X, rownames(X)[1:10], rownames(X)[11:40], n_complementary = 2.5, n_iter = 1, marker_features = markers, verbose = FALSE), "n_complementary")
+})

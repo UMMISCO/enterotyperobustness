@@ -91,6 +91,8 @@ erp <- function(abundance, anchors, complementary,
     }
     n_complementary <- round(p_complementary * cohort_size)
   }
+  n_iter <- check_count(n_iter, "n_iter"); K <- check_count(K, "K", 2); n_cores <- check_count(n_cores, "n_cores")
+  n_complementary <- check_count(n_complementary, "n_complementary")
   if (length(iteration_seeds) != n_iter) stop("`iteration_seeds` must have length `n_iter`.")
   check_diversity(diversity, c(anchors, complementary))
   replace <- match.arg(replace)
@@ -162,8 +164,9 @@ run_dmm_iterations <- function(abundance, id_list, K, dmm_seed, integerise,
     # (un-zeroed) and kmeans() reads that memory before writing it, so a few
     # percent of fits on multimodal draws reach a different EM optimum from one
     # run to the next, sequential or parallel. A fresh fork per fit reduces the
-    # effect; it cannot remove it. Aggregates (assignment frequencies, consensus
-    # labels) are unaffected; see inst/scripts/determinism_full.R.
+    # effect; it cannot remove it. In the runs tested (inst/scripts/determinism_full.R,
+    # healthy anchors) the aggregates were materially stable: assignment frequencies
+    # moved by at most 0.01 between runs and no consensus label changed.
     parallel::mclapply(seq_len(n_iter), one, mc.cores = n_cores,
                        mc.preschedule = FALSE, mc.set.seed = FALSE)
   } else {

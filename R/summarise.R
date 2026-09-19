@@ -44,6 +44,8 @@ assignment_frequency <- function(x) {
 assignment_entropy <- function(freq, base = 2) {
   if (all(enterotype_names() %in% colnames(freq))) freq <- freq[, enterotype_names(), drop = FALSE]
   if (any(freq < 0, na.rm = TRUE) || any(freq > 1, na.rm = TRUE)) stop("`freq` must hold frequencies in [0, 1].")
+  rs <- rowSums(freq); bad <- !is.na(rs) & abs(rs - 1) > 1e-6
+  if (any(bad)) stop(sum(bad), " row(s) of `freq` do not sum to 1 (first: ", rownames(freq)[which(bad)[1]], ", sum ", signif(rs[which(bad)[1]], 4), ").")
   K <- ncol(freq)
   plogp <- function(p) ifelse(p > 0, p * log(p, base), 0)
   h <- -rowSums(plogp(freq)) / log(K, base)
@@ -153,6 +155,7 @@ core_variable <- function(labels, rule = c("unanimous", "k_minus_1", "sd"),
         if (length(variable)) data.frame(sample = variable, enterotype = e, status = "variable"))
     })
     out <- do.call(rbind, out)
+    if (is.null(out)) out <- data.frame(sample = character(0), enterotype = character(0), status = character(0))
     rownames(out) <- NULL
     return(out)
   }
@@ -206,8 +209,8 @@ labels_by_condition <- function(results, samples = results[[1]]$samples$anchors,
 merge_pairs <- function(freq, pairs = list(c("Bact1", "Bact2"), c("Prevotella", "Ruminococcus")),
                         method = c("A", "B"), seed = 314) {
   method <- match.arg(method)
-  if (!setequal(unlist(pairs), enterotype_names()) || length(pairs) != 2) {
-    stop("`pairs` must be two vectors partitioning ", paste(enterotype_names(), collapse = ", "))
+  if (length(pairs) != 2 || anyDuplicated(unlist(pairs)) || !setequal(unlist(pairs), enterotype_names())) {
+    stop("`pairs` must be two disjoint vectors partitioning ", paste(enterotype_names(), collapse = ", "))
   }
   pair_names <- vapply(pairs, paste, character(1), collapse = "")
   sums <- sapply(pairs, function(p) rowSums(freq[, p, drop = FALSE]))

@@ -25,9 +25,12 @@ their own group in the paper). Default: the first column.}
 \item{seed}{Seed.}
 }
 \value{
-A list with \code{statistic}, \code{df}, \code{p}, \code{n_perm}, \code{coefficients}.
+A list with \code{statistic}, \code{df}, \code{p}, \code{n} (complete samples),
+\code{n_perm} (valid permutations, the denominator of \code{p}), \code{coefficients}.
 Works with two or more distinct labels (with two, \code{multinom} is a binary
-logit and its coefficients are handled as a one-row matrix).
+logit and its coefficients are handled as a one-row matrix). Samples with
+a missing label in any condition are dropped before permuting; the test
+stops if more than 5 \% of the permuted fits fail.
 }
 \description{
 Fallback for \code{\link[=multinomial_mixed_test]{multinomial_mixed_test()}} when the mixed logit does not

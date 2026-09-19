@@ -92,3 +92,11 @@ test_that("mixed_entropy_model uses Satterthwaite df for the contrasts, whatever
   expect_equal(m$pairwise$df, ct$df, tolerance = 1e-8)
   expect_equal(m$pairwise$p, ct$p.value, tolerance = 1e-8)
 })
+
+test_that("multinomial_permutation_test drops incomplete samples and counts valid permutations", {
+  skip_if_not_installed("nnet")
+  lab2 <- lab; lab2[1, "B"] <- NA
+  r <- multinomial_permutation_test(lab2, reference_condition = "Own", n_perm = 49)
+  expect_equal(r$n, nrow(lab) - 1); expect_equal(r$n_perm, 49)
+  expect_true(r$p >= 1 / 50 && r$p <= 1)
+})

@@ -147,6 +147,8 @@ cat("Interval widths (median over fractions) by enterotype:\n")
 print(aggregate(cbind(submitted, sqrt_n, bca, iter) ~ group, w, stats::median), row.names = FALSE)
 cat(sprintf("\nmedian ratio sqrt(n)/submitted width = %.1f ; BCa upper bound > 1 in %d cells (submitted: %d cells above 1)\n",
             stats::median(w$sqrt_n / w$submitted), sum(w$bca_upper > 1), sum(w$submitted_n_upper > 1)))
+cat("\nNote: the sample bootstrap describes the between-sample spread conditional on the 500 fits; the iteration bootstrap describes\n",
+    "the Monte-Carlo variability of the procedure conditional on the samples. Neither propagates both sources at once; report them as such.\n")
 cat("\nFirst fraction at which every enterotype's BCa lower bound exceeds 0.95:\n")
 q95 <- aggregate(bca_lower ~ fraction, res3A, min); cat("  Q =", q95$fraction[which(q95$bca_lower > 0.95)[1]], "\n")
 cat("\nSession:\n"); print(sessionInfo())

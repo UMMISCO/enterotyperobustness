@@ -55,12 +55,18 @@ paired_entropy_test <- function(data, sample = "sample", condition = "condition"
       message("Stratum ", s, " skipped: ", nrow(wide), " complete sample(s) in ", ncol(wide), " condition(s).")
       next
     }
+    if (all(wide == wide[1])) {                      # no variability at all: nothing to test
+      message("Stratum ", s, ": all values identical; statistic 0, p = 1, no pairwise table.")
+      omni[[s]] <- data.frame(stratum = s, n = nrow(wide), statistic = 0, df = ncol(wide) - 1, p = 1)
+      next
+    }
     ft <- stats::friedman.test(wide)
     omni[[s]] <- data.frame(stratum = s, n = nrow(wide), statistic = unname(ft$statistic),
                             df = unname(ft$parameter), p = ft$p.value)
-    ph <- if (post_hoc == "conover") {
+    ph <- tryCatch(if (post_hoc == "conover") {
       PMCMRplus::frdAllPairsConoverTest(y = wide, p.adjust.method = "none")
-    } else PMCMRplus::frdAllPairsNemenyiTest(y = wide)
+    } else PMCMRplus::frdAllPairsNemenyiTest(y = wide), error = function(e) NULL)
+    if (is.null(ph)) { message("Stratum ", s, ": post hoc test failed (degenerate data); no pairwise table."); next }
     pm <- ph$p.value
     rows <- which(!is.na(pm), arr.ind = TRUE)
     pw <- data.frame(stratum = s, cond1 = rownames(pm)[rows[, 1]], cond2 = colnames(pm)[rows[, 2]],
@@ -71,7 +77,9 @@ paired_entropy_test <- function(data, sample = "sample", condition = "condition"
   if (!length(omni)) stop("No stratum with at least three complete samples.")
   omni <- do.call(rbind, omni); rownames(omni) <- NULL
   omni$p_adj <- stats::p.adjust(omni$p, method = p_adjust)
-  pairs <- do.call(rbind, pairs); rownames(pairs) <- NULL
+  pairs <- if (length(pairs)) do.call(rbind, pairs) else
+    data.frame(stratum = character(0), cond1 = character(0), cond2 = character(0), p = numeric(0), p_adj = numeric(0))
+  rownames(pairs) <- NULL
   list(omnibus = omni, pairwise = pairs, post_hoc = post_hoc, p_adjust = p_adjust)
 }
 
@@ -93,10 +101,15 @@ cochran_q_test <- function(labels, enterotype, p_adjust = "BH") {
   labels <- labels[stats::complete.cases(labels), , drop = FALSE]
   if (nrow(labels) < 2) stop("Fewer than two samples with a label in every condition.")
   ind <- (labels == enterotype) * 1
-  ft <- stats::friedman.test(ind)
   conds <- colnames(labels)
   cmb <- utils::combn(conds, 2)
   pw <- data.frame(cond1 = cmb[1, ], cond2 = cmb[2, ], stringsAsFactors = FALSE)
+  if (all(ind == ind[1])) {                          # enterotype absent everywhere, or present everywhere: no test
+    pw$p <- 1; pw$p_adj <- 1
+    return(list(test = data.frame(enterotype = enterotype, n = nrow(labels), statistic = 0, df = ncol(labels) - 1, p = 1),
+                prevalence = colMeans(ind), pairwise = pw))
+  }
+  ft <- stats::friedman.test(ind)
   pw$p <- apply(cmb, 2, function(cc) {
     tab <- table(factor(ind[, cc[1]], levels = 0:1), factor(ind[, cc[2]], levels = 0:1))
     b <- tab[1, 2]; c <- tab[2, 1]
@@ -120,15 +133,19 @@ cochran_q_test <- function(labels, enterotype, p_adjust = "BH") {
 #' respects the shared-anchor structure. Cell-level post hoc p-values use the
 #' adjusted standardised residuals under the same permutation scheme.
 #'
-#' @param labels Character matrix, samples x conditions.
+#' @param labels Character matrix, samples x conditions. Samples with a
+#'   missing label in any condition are dropped (complete cases), so that the
+#'   within-sample permutation never moves a missing value between conditions.
 #' @param n_perm Number of permutations.
 #' @param seed Seed.
 #' @param p_adjust Method for the cell-level p-values.
 #' @return A list with `table` (condition x label counts), `statistic`, `p`,
-#'   `n_perm`, and `cells` (condition, enterotype, observed, expected,
+#'   `n`, `n_perm`, and `cells` (condition, enterotype, observed, expected,
 #'   residual, p, p_adj).
 #' @export
 anchor_permutation_test <- function(labels, n_perm = 9999, seed = 314, p_adjust = "BH") {
+  labels <- labels[stats::complete.cases(labels), , drop = FALSE]
+  if (nrow(labels) < 2) stop("Fewer than two samples with a label in every condition.")
   lev <- sort(unique(as.vector(labels)))
   conds <- colnames(labels); n <- nrow(labels); k <- ncol(labels)
   counts <- function(m) {
@@ -158,7 +175,7 @@ anchor_permutation_test <- function(labels, n_perm = 9999, seed = 314, p_adjust 
                       observed = as.vector(obs), expected = as.vector(o$E), residual = as.vector(res_obs),
                       p = as.vector((1 + res_ge) / (1 + n_perm)), stringsAsFactors = FALSE)
   cells$p_adj <- stats::p.adjust(cells$p, method = p_adjust)
-  list(table = obs, statistic = o$stat, p = p, n_perm = n_perm, cells = cells)
+  list(table = obs, statistic = o$stat, p = p, n = n, n_perm = n_perm, cells = cells)
 }
 
 #' Bootstrap confidence interval of a mean

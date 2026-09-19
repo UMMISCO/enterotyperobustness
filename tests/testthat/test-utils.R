@@ -49,3 +49,14 @@ test_that("adjusted_rand_index handles edge cases and agrees with the definition
   expect_true(is.na(adjusted_rand_index(c(NA, "a"), c("b", NA))))
   expect_error(adjusted_rand_index(1:3, 1:2), "same length")
 })
+
+test_that("check_abundance rejects infinite values, duplicated features and empty tables", {
+  X <- simulate_counts(n = 8)
+  bad <- X; bad[1, 1] <- Inf
+  expect_error(enterotyperobustness:::check_abundance(bad), "finite")
+  dup <- X; colnames(dup)[2] <- colnames(dup)[1]
+  expect_error(enterotyperobustness:::check_abundance(dup), "duplicated feature")
+  expect_error(enterotyperobustness:::check_abundance(X[0, , drop = FALSE]), "zero rows")
+  expect_error(enterotyperobustness:::check_count(2.5, "n_iter"), "n_iter")
+  expect_identical(enterotyperobustness:::check_count(3, "K"), 3L)
+})

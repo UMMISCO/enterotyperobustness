@@ -5,7 +5,8 @@
 # On the 500 stored DMM fits of each ERP experiment:
 #   * re-annotate every fit by Hungarian matching of its component centroids to a
 #     reference fit on the full cohort (Jensen-Shannon distance), instead of the
-#     Bacteroides-rank heuristic; compare the two labellings per iteration (ARI,
+#     Bacteroides-rank heuristic; compare the two labellings per iteration (share of
+#     samples with the same nominal label, confusion table of the names,
 #     identical name -> component map) and per anchor (consensus enterotype);
 #   * record, per iteration, the Bacteroides gap between the Bact1 and Bact2
 #     clusters (absolute and relative), the Prevotella margin, the matching margin,
@@ -19,7 +20,8 @@
 # Inputs : mirror (stored fits), METACARDIS_DATA (counts of the drawn samples and
 #          the reference fit), the samplesList_alluvials_*.rda core/variable lists.
 # Outputs: out/03_cluster_matching/  iterations.csv anchors.csv tradeoffs.csv
-#          prevalence_rank_vs_matched.csv, Bacteroides_gap.pdf ARI.pdf posterior_margin.pdf,
+#          prevalence_rank_vs_matched.csv, name_confusion.csv, Bacteroides_gap.pdf
+#          label_agreement.pdf posterior_margin.pdf,
 #          summary.txt ; out/cache/reference_fit.rds
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
@@ -51,7 +53,7 @@ anchor_set_of <- c(Healthy = "healthy", DiabeticsT = "t2d", Obese = "obese")
 
 # ---- 3. Every experiment, every iteration ------------------------------------------------------
 exps <- legacy_erp_experiments()
-iter_rows <- list(); anchor_rows <- list(); consensus <- list()
+iter_rows <- list(); anchor_rows <- list(); consensus <- list(); conf_rows <- list()
 t0 <- Sys.time()
 for (i in seq_len(nrow(exps))) {
   lab <- exps$label[i]
@@ -60,12 +62,14 @@ for (i in seq_len(nrow(exps))) {
   matched <- matrix(NA_character_, nrow(r$assignments), n_iter, dimnames = dimnames(r$assignments))
   margin <- matrix(NA_real_, length(anchors), n_iter, dimnames = list(anchors, NULL))
   it <- vector("list", n_iter)
+  conf <- matrix(0L, 4, 4, dimnames = list(rank = ent, matched = ent))   # nominal labels, rank vs matched, summed over iterations
   for (j in seq_len(n_iter)) {
     fit <- r$fits[[j]]; ids <- rownames(dmm_posterior(fit))
     u <- union_counts(A, ids); ids_u <- u$ids_unique
     am <- annotate_clusters(fit, u$counts, md$marker_features, method = "match", reference = ref)
     comp <- dmm_assign(fit)
     matched[ids_u, j] <- am$component_names[comp][u$keep]
+    conf <- conf + table(factor(r$assignments[ids_u, j], ent), factor(matched[ids_u, j], ent))
     post <- dmm_posterior(fit)[u$keep, , drop = FALSE]; rownames(post) <- ids_u
     pa <- post[anchors, , drop = FALSE]
     top2 <- t(apply(pa, 1, function(v) sort(v, decreasing = TRUE)[1:2])); margin[, j] <- top2[, 1] - top2[, 2]
@@ -75,7 +79,8 @@ for (i in seq_len(nrow(exps))) {
     jsd_other <- min(apply(others, 2, function(pp) jsd(cent[, pp[1]], cent[, pp[2]])))
     it[[j]] <- data.frame(experiment = lab, iteration = j,
                           map_identical = identical(unname(r$label_map[j, ent]), unname(am$map[ent])),
-                          ari = adjusted_rand_index(r$assignments[ids_u, j], matched[ids_u, j]),
+                          # NB: an adjusted Rand index would be 1 by construction here (same partition, renamed), so it is not used
+                          label_agreement = mean(r$assignments[ids_u, j] == matched[ids_u, j]),
                           matching_cost = am$gap$matching_cost, matching_margin = am$gap$matching_margin_min,
                           bact_gap = r$gap$bact_gap[j], bact_gap_relative = r$gap$bact_gap_relative[j],
                           prevotella_margin = r$gap$prevotella_margin[j], prevotella_collision = r$gap$prevotella_collision[j],
@@ -83,6 +88,7 @@ for (i in seq_len(nrow(exps))) {
                           flagged_2022 = r$flags[["bact2_not_lowest_diversity"]][j] | r$flags[["rum_not_highest_diversity"]][j])
   }
   iter_rows[[lab]] <- do.call(rbind, it)
+  conf_rows[[lab]] <- cbind(experiment = lab, as.data.frame(as.table(conf)))
   f_rank <- assignment_frequency(r$assignments[anchors, ]); f_match <- assignment_frequency(matched[anchors, ])
   c_rank <- robustness(f_rank); c_match <- robustness(f_match)
   aset <- anchor_set_of[[sub("-.*", "", lab)]]
@@ -95,14 +101,15 @@ for (i in seq_len(nrow(exps))) {
     status_published = ifelse(anchors %in% st$sample[st$status == "variable"], "variable",
                               ifelse(anchors %in% st$sample[st$status == "core"], "core", "unclassified")))
   consensus[[lab]] <- list(rank = stats::setNames(c_rank$enterotype, anchors), matched = stats::setNames(c_match$enterotype, anchors))
-  cat(sprintf("%-24s %d iterations, maps identical %.1f%%, mean ARI %.3f, consensus changed %d / %d anchors  (%.1f min)\n",
-              lab, n_iter, 100 * mean(iter_rows[[lab]]$map_identical), mean(iter_rows[[lab]]$ari, na.rm = TRUE),
+  cat(sprintf("%-24s %d iterations, maps identical %.1f%%, mean label agreement %.3f, consensus changed %d / %d anchors  (%.1f min)\n",
+              lab, n_iter, 100 * mean(iter_rows[[lab]]$map_identical), mean(iter_rows[[lab]]$label_agreement, na.rm = TRUE),
               sum(c_rank$enterotype != c_match$enterotype), length(anchors), as.numeric(difftime(Sys.time(), t0, units = "mins"))))
   rm(r); invisible(gc())
 }
 iters <- do.call(rbind, iter_rows); anchors_df <- do.call(rbind, anchor_rows); rownames(iters) <- rownames(anchors_df) <- NULL
 write.csv(iters, file.path(out, "iterations.csv"), row.names = FALSE)
 write.csv(anchors_df, file.path(out, "anchors.csv"), row.names = FALSE)
+write.csv(do.call(rbind, conf_rows), file.path(out, "name_confusion.csv"), row.names = FALSE)
 
 # ---- 4. Prevalence and trade-offs under both labellings --------------------------------------
 prev <- do.call(rbind, lapply(names(consensus), function(lab) do.call(rbind, lapply(ent, function(e) data.frame(
@@ -129,9 +136,9 @@ ggsave(file.path(out, "Bacteroides_gap.pdf"),
     labs(y = "relative gap in mean Bacteroides, (Bact2 - Bact1) / Bact2", x = NULL,
          title = "Per-iteration Bacteroides gap between the Bact2 and Bact1 clusters (500 fits per experiment)") +
     theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)), width = 11, height = 5)
-ggsave(file.path(out, "ARI.pdf"),
-  ggplot(iters, aes(experiment, ari)) + geom_boxplot(outlier.size = 0.5) +
-    labs(y = "adjusted Rand index, rank vs matched labels", x = NULL, title = "Agreement between the published (rank) and the matched labelling, per iteration") +
+ggsave(file.path(out, "label_agreement.pdf"),
+  ggplot(iters, aes(experiment, label_agreement)) + geom_boxplot(outlier.size = 0.5) +
+    labs(y = "share of samples with the same name, rank vs matched", x = NULL, title = "Agreement between the published (rank) and the matched labelling, per iteration") +
     theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)), width = 11, height = 5)
 am <- anchors_df[anchors_df$status_published != "unclassified", ]
 ggsave(file.path(out, "posterior_margin.pdf"),
@@ -146,8 +153,8 @@ sink(file.path(out, "summary.txt"))
 cat("03/04  Cluster matching and Bacteroides gap, run", format(Sys.time()), "\n")
 fit_min <- attr(ref, "fit_time_min"); if (is.null(fit_min)) fit_min <- NA_real_
 cat(sprintf("reference fit: %d samples, K = 4, seed 314, %.1f min; components %s\n\n", nrow(A), fit_min, paste(ref_ann$component_names, collapse = "/")))
-cat("Per experiment: name->component map identical (rank vs matched), ARI, relative Bacteroides gap, JSD Bact1-Bact2 vs closest other pair:\n")
-s <- aggregate(cbind(map_identical, ari, bact_gap_relative, jsd_bact1_bact2, jsd_min_other_pair, flagged_2022) ~ experiment, iters,
+cat("Per experiment: name->component map identical (rank vs matched), share of identical names, relative Bacteroides gap, JSD Bact1-Bact2 vs closest other pair:\n")
+s <- aggregate(cbind(map_identical, label_agreement, bact_gap_relative, jsd_bact1_bact2, jsd_min_other_pair, flagged_2022) ~ experiment, iters,
                function(v) mean(v, na.rm = TRUE), na.action = stats::na.pass)   # flagged_2022 is NA where no WARNING file exists
 s$gap_below_0.1 <- aggregate(bact_gap_relative ~ experiment, iters, function(v) mean(v < 0.1))$bact_gap_relative
 print(s, row.names = FALSE, digits = 3)

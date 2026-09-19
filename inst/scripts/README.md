@@ -31,4 +31,16 @@ earlier ones under `out/`:
 | `03_cluster_matching.R` | Scripts 03 and 04: centroid matching against a reference fit, adjusted Rand index, Bacteroides gap (R1 major 1). | mirror, `METACARDIS_DATA` |
 | `05_anomaly_tables.R` | Tables S1 to S3 from the raw flags; re-aggregation without flagged iterations. Set `SUPPLEMENTAL_TEX` to compare with the submitted tables. | mirror, `out/cache` |
 | `06_core_variable_sensitivity.R` | Unanimity vs all-but-one vs SD thresholds for the core/variable rule (R1 minor 1). | mirror, `out/cache` |
-| `07` to `10` | *Planned:* ERPM baseline at the ERP sizes, ERP rerun with matching, PAM on Jensen-Shannon, alternative K. | mirror or `METACARDIS_DATA` |
+| `07_size_baseline.R` | The anchors under their own-group ERP condition versus under ERPM at the matched cohort fraction: size baseline for the composition effect (R1 major 4). | `out/cache`, mirror figure objects |
+| `08_erp_rerun_matched.R` | Every ERP condition refitted with the legacy draws and `annotate = "match"` (no Bacteroides rank), compared with the published labelling (R1 major 1, confirmatory). | `METACARDIS_DATA`, mirror, `out/cache/reference_fit.rds` |
+| `09_alt_clustering_PAM_JSD.R` | ERPM repeated with PAM on Jensen-Shannon distance: are ERP-core individuals more robust than ERP-variable ones under a clustering independent of DMM (R1 major 2)? | `METACARDIS_DATA`, `out/cache`, mirror figure objects |
+| `10_alt_K.R` | ERPM with K = 3 and K = 5 DMM components matched to full-cohort reference fits (R1 minor 4). | `METACARDIS_DATA`, `out/cache`, mirror figure objects |
+
+Expensive intermediates are cached under `out/cache/` through `inst/scripts/cache_utils.R`:
+each cache carries a manifest (parameters, fingerprint of the inputs, package,
+DirichletMultinomial and R versions, git commit, date) and is reused only when
+the parameters and inputs match. Caches written before this convention are
+adopted with a warning; the archived deposit must be produced from a clean
+clone without caches. Multiple Wilcoxon tests across fractions are
+Benjamini-Hochberg adjusted within their family and counted only when the
+direction is the expected one; each script also reports a curve-level test.

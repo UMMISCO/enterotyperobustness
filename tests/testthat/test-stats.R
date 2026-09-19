@@ -105,3 +105,22 @@ test_that("seeded functions leave the caller's random stream untouched", {
   invisible(stratified_subsample(stats::setNames(rep(c("a", "b"), 10), sprintf("s%02d", 1:20)), 0.5, seed = 1))
   expect_identical(stats::runif(3), ref)
 })
+
+test_that("degenerate inputs give defined results instead of NaN or opaque errors", {
+  skip_if_not_installed("PMCMRplus")
+  lab <- cbind(A = rep(c("Bact1", "Bact2"), 10), B = rep(c("Bact1", "Bact2"), 10)); rownames(lab) <- sprintf("s%02d", 1:20)
+  r <- cochran_q_test(lab, "Prevotella")                    # absent everywhere
+  expect_equal(r$test$statistic, 0); expect_equal(r$test$p, 1); expect_true(all(r$pairwise$p == 1))
+  const <- long; const$entropy <- 0.3
+  expect_message(rc <- paired_entropy_test(const), "identical")
+  expect_equal(rc$omnibus$p, 1); expect_equal(nrow(rc$pairwise), 0)
+})
+
+test_that("anchor_permutation_test uses complete cases and reports n", {
+  lab <- cbind(A = rep(c("Bact1", "Bact2", "Prevotella"), 10), B = rep(c("Bact2", "Bact1", "Prevotella"), 10), C = rep(c("Bact1", "Bact2", "Prevotella"), 10))
+  rownames(lab) <- sprintf("s%02d", 1:30)
+  lab2 <- lab; lab2[1, "C"] <- NA
+  r <- anchor_permutation_test(lab2, n_perm = 50)
+  expect_equal(r$n, 29); expect_equal(sum(r$table), 29 * 3)
+  expect_equal(r$statistic, anchor_permutation_test(lab[-1, ], n_perm = 50)$statistic)
+})

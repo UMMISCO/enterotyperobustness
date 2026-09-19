@@ -49,3 +49,9 @@ test_that("annotation refuses wrong inputs", {
   expect_error(annotate_clusters(fit, X, c(bacteroides = "Nope", prevotella = "Prevotella")), "not in")
   expect_error(annotate_clusters(fit, X, markers, method = "match"), "reference")
 })
+
+test_that("annotate_clusters refuses a count table that is not the fitted table in the fitted order", {
+  expect_error(annotate_clusters(fit, X[rev(seq_len(nrow(X))), ], markers), "fitted order")
+  expect_error(annotate_clusters(fit, X[, rev(seq_len(ncol(X)))], markers), "features of `fit`")
+  expect_s3_class(annotate_clusters(fit, X, markers), "enterotype_annotation")
+})

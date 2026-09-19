@@ -44,6 +44,8 @@ Suggests:
     lmerTest,
     emmeans,
     mclogit,
-    nnet
+    nnet,
+    pkgload,
+    cluster
 Config/testthat/edition: 3
 VignetteBuilder: knitr

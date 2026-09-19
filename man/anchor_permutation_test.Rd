@@ -7,7 +7,9 @@
 anchor_permutation_test(labels, n_perm = 9999, seed = 314, p_adjust = "BH")
 }
 \arguments{
-\item{labels}{Character matrix, samples x conditions.}
+\item{labels}{Character matrix, samples x conditions. Samples with a
+missing label in any condition are dropped (complete cases), so that the
+within-sample permutation never moves a missing value between conditions.}
 
 \item{n_perm}{Number of permutations.}
 
@@ -17,7 +19,7 @@ anchor_permutation_test(labels, n_perm = 9999, seed = 314, p_adjust = "BH")
 }
 \value{
 A list with \code{table} (condition x label counts), \code{statistic}, \code{p},
-\code{n_perm}, and \code{cells} (condition, enterotype, observed, expected,
+\code{n}, \code{n_perm}, and \code{cells} (condition, enterotype, observed, expected,
 residual, p, p_adj).
 }
 \description{

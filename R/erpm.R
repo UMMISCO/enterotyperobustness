@@ -52,6 +52,15 @@ erpm <- function(abundance, classes, fractions = erpm_default_fractions(), n_ite
   }
   classes <- stats::setNames(as.character(classes), names(classes))
   if (is.null(class_order)) class_order <- sort(unique(classes), method = "radix")
+  n_iter <- check_count(n_iter, "n_iter"); K <- check_count(K, "K", 2); n_cores <- check_count(n_cores, "n_cores")
+  if (!is.numeric(fractions) || !length(fractions) || any(!is.finite(fractions)) || any(fractions <= 0 | fractions > 1)) {
+    stop("`fractions` must be numbers in (0, 1].")
+  }
+  keys <- sprintf("Q%.2f", fractions)
+  if (anyDuplicated(keys)) {
+    stop("Fractions are named to two decimals (", paste(keys[duplicated(keys)], collapse = ", "),
+         " would collide); use a grid with at most two decimals.")
+  }
   if (length(iteration_seeds) != n_iter) stop("`iteration_seeds` must have length `n_iter`.")
   check_diversity(diversity, names(classes))
   annotate <- match.arg(annotate)
@@ -59,7 +68,7 @@ erpm <- function(abundance, classes, fractions = erpm_default_fractions(), n_ite
   if (!is.null(fits_dir)) dir.create(fits_dir, showWarnings = FALSE, recursive = TRUE)
 
   results <- vector("list", length(fractions))
-  names(results) <- sprintf("Q%.2f", fractions)
+  names(results) <- keys
   for (f in seq_along(fractions)) {
     Q <- fractions[f]
     if (verbose) message("ERPM fraction ", Q, " (", f, "/", length(fractions), ")")
