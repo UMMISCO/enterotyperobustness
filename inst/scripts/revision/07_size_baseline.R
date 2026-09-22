@@ -134,6 +134,28 @@ p <- ggplot() +
   theme_bw() + theme(legend.position = "bottom")
 ggsave(file.path(out, "Figure_size_baseline.pdf"), p, width = 13, height = 5)
 
+# ---- 5b. Simplified figure for the response letter: one curve per anchor set ------------------
+pooled_erpm <- do.call(rbind, lapply(split(erpm_rows, list(erpm_rows$anchor_set, erpm_rows$fraction), drop = TRUE), function(x) {
+  b <- bootstrap_ci(x$robustness, R = 1000, type = "bca", seed = 314)
+  data.frame(anchor_set = x$anchor_set[1], n = round(x$fraction[1] * N_cohort), mean = b[["mean"]], lower = b[["lower"]], upper = b[["upper"]]) }))
+pooled_erp <- aggregate(robustness ~ anchor_set + condition + n_clustered + own, erp_rows, mean)
+names(pooled_erp)[names(pooled_erp) == "robustness"] <- "mean"
+pooled_erp$label <- sub("^[A-Za-z]+-", "+ ", pooled_erp$condition)
+lab_sets <- c(healthy = "healthy anchors (142 + 86 = 228)", t2d = "T2D-metformin anchors (226 + 135 = 361)", obese = "obese anchors (209 + 125 = 334)")
+pooled_erpm$anchor_set <- factor(pooled_erpm$anchor_set, levels = names(lab_sets)); pooled_erp$anchor_set <- factor(pooled_erp$anchor_set, levels = names(lab_sets))
+ps <- ggplot() +
+  geom_ribbon(data = pooled_erpm, aes(n, ymin = lower, ymax = upper), fill = "grey75", alpha = 0.6) +
+  geom_line(data = pooled_erpm, aes(n, mean), colour = "grey30") +
+  geom_vline(data = unique(pooled_erp[, c("anchor_set", "n_clustered")]), aes(xintercept = n_clustered), linetype = "dotted", colour = "grey40") +
+  geom_point(data = pooled_erp, aes(n_clustered, mean, shape = own), size = 2.6, colour = "#0059c8") +
+  geom_text(data = pooled_erp, aes(n_clustered, mean, label = label), hjust = -0.15, size = 2.8, colour = "#0059c8") +
+  scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), labels = c(`TRUE` = "own clinical group", `FALSE` = "other complementary group"), name = "ERP condition") +
+  geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey50") +
+  facet_wrap(~anchor_set, nrow = 1, labeller = labeller(anchor_set = lab_sets)) +
+  labs(x = "number of samples clustered together", y = "mean robustness of the anchor samples") +
+  theme_bw() + theme(legend.position = "bottom")
+ggsave(file.path(out, "Figure_size_baseline_simple.pdf"), ps, width = 12, height = 4.2)
+
 # ---- 6. Summary ----------------------------------------------------------------------------------
 sink(file.path(out, "summary.txt"))
 cat("07  Size baseline, run", format(Sys.time()), "\n\n")

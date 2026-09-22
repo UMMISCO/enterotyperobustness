@@ -67,3 +67,19 @@ reference_fit_manifest <- function(A, md) {
   cache_manifest(params = list(algorithm = "reference_centroids v1", K = 4, seed = 314, integerise = "trunc", annotation = "rank"),
                  inputs = list(A = A, marker_features = md$marker_features, richness = md$richness[rownames(A)]))
 }
+
+# The ERPM sub-cohort environments (Supplementary Figure S3 / Table S3), read by script 00b.
+subcohort_dirs <- function(art) sort(list.files(art, pattern = "^ConfidenceN=", full.names = TRUE))
+subcohort_files <- function(art) unlist(lapply(subcohort_dirs(art), function(d)
+  list.files(d, pattern = "^Conf_?[0-9.]+_TotalEnvironment\\.RData$", full.names = TRUE)))
+subcohort_cache_manifest <- function(art) {
+  files <- subcohort_files(art); fi <- file.info(files)
+  cache_manifest(params = list(algorithm = "read_legacy_erpm v1 on the ConfidenceN=* sub-cohort environments: integer-coded assignments"),
+                 inputs = list(files = file.path(basename(dirname(files)), basename(files)), size = fi$size, mtime = format(fi$mtime, "%Y-%m-%d %H:%M:%S")))
+}
+load_subcohort_cache <- function(mirror, file = "out/cache/erpm_subcohorts.rds") {
+  m <- subcohort_cache_manifest(file.path(mirror, "analyses/2.Estimating_DMM/Article"))
+  x <- cache_read(file, m)
+  if (is.null(x)) stop("No valid sub-cohort cache at ", file, ": run inst/scripts/revision/00b_cache_subcohorts.R first.")
+  x
+}
