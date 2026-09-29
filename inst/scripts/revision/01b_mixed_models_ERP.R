@@ -9,7 +9,7 @@
 #                  statistic -> tests of script 01
 #      Friedman/Conover by reference stratum (script 01) is the sensitivity check.
 #
-# Inputs : the saved figure objects (mirror) — same as script 01.
+# Inputs : the saved figure objects (mirror) ??? same as script 01.
 # Outputs: out/01b_mixed_models/  mixed_entropy_pairwise.csv, mixed_entropy_omnibus.csv,
 #          mixed_labels.csv, three_way_comparison.csv, tableS4_mixed.tex,
 #          Figure1C/1F/2C/2F.pdf (LMM brackets), Figure1_BCEF.pdf, Figure2_BCEF.pdf, summary.txt
@@ -140,7 +140,102 @@ fig2 <- plot_figure_panels(all_plots$t2d4, ent_plots$t2d4, all_plots$obese4, ent
 ggplot2::ggsave(file.path(out, "Figure1_BCEF.pdf"), fig1, width = 13.6, height = 11)
 ggplot2::ggsave(file.path(out, "Figure2_BCEF.pdf"), fig2, width = 13.6, height = 11)
 
-# ---- 6. Summary ----------------------------------------------------------------------
+# ---- 6. Panels with LMM brackets, add significativity results to alluvials from post-hoc test on ChiSq residuals, and the assembled B/C/E/F pages -----------------
+##load the stat results of ChiSq test with null distribution and permutations of labels by individual + cell-level post-hoc tests results on standarized residual values; stored in out/01_paired_tests
+
+if (file.exists(file.path(s01, "label_tests_chisqOnly_meltedFormat.csv"))) {
+  all_plots_statsdf <- read.csv(file.path(s01, "label_tests_chisqOnly_meltedFormat.csv"), stringsAsFactors = FALSE)
+  
+  ##iterate to generate only the alluvials
+  all_plots_addph <- list()
+  for (k in names(designs)) {
+    
+    d <- designs[[k]]
+    
+    # Get statistics for this experiment
+    d.stat <- all_plots_statsdf %>%
+      dplyr::filter(ERPexperiment == k) %>%
+      dplyr::mutate(
+        # Make sure x positions exactly match the alluvial plot
+        condition = factor(
+          condition,
+          levels = levels(d$condition)
+        ),
+        
+        # Bottom -> top stacking order
+        enterotype = factor(
+          enterotype,
+          levels = c(
+            "Ruminococcus",
+            "Prevotella",
+            "Bact1",
+            "Bact2"
+          )
+        )
+      ) %>%
+      
+      # IMPORTANT: arrange according to factor levels
+      dplyr::arrange(condition, enterotype) %>%
+      dplyr::group_by(condition) %>%
+      dplyr::mutate(
+        ymin = cumsum(observed) - observed,
+        ymax = cumsum(observed),
+        # Centre of each stratum
+        y = cumsum(observed) - observed / 2
+      ) %>%
+      dplyr::ungroup() %>%
+      
+      # Keep significant cells
+      dplyr::filter(p_adj < 0.05) %>%
+      dplyr::mutate(
+        stars = dplyr::case_when(
+          p_adj < 0.001 ~ "***",
+          p_adj < 0.01  ~ "**",
+          p_adj < 0.05  ~ "*"
+        ),
+        
+        annotation = paste0(
+          ifelse(residual > 0, "+", "-"),
+          stars
+        )
+      )
+    
+    # Base alluvial
+    all_plot.k <- plot_alluvial(
+      d,
+      label = "label",
+      condition_levels = levels(d$condition),
+      ylab = paste(
+        length(unique(d$sample)),
+        "anchor samples"
+      )
+    )
+    
+    # Add annotations AND assign result
+    all_plot.k <- all_plot.k +
+      geom_text(
+        data = d.stat,
+        aes(
+          x = condition,
+          y = y,
+          label = annotation
+        ),
+        inherit.aes = FALSE,
+        size = 5,
+        fontface = "bold"
+      )
+    
+    # Save plot
+    all_plots_addph[[k]] <- all_plot.k
+  }
+  ##re-generate the figures
+  fig1 <- plot_figure_panels(all_plots_addph$healthy3, ent_plots$healthy3, all_plots_addph$healthy5, ent_plots$healthy5)
+  fig2 <- plot_figure_panels(all_plots_addph$t2d4, ent_plots$t2d4, all_plots_addph$obese4, ent_plots$obese4)
+  ggplot2::ggsave(file.path(out, "Figure1_BCEF_addStatsAlluvials.pdf"), fig1, width = 13.6, height = 11)
+  ggplot2::ggsave(file.path(out, "Figure2_BCEF_addStatsAlluvials.pdf"), fig2, width = 13.6, height = 11)
+}
+
+# ---- 7. Summary ----------------------------------------------------------------------
 sink(file.path(out, "summary.txt"))
 cat("01b  Mixed-effects analyses, run", format(Sys.time()), "\n")
 cat("Stars on the panels come from the LMM contrasts (experiment x label + (1 | individual)); Friedman/Conover by\n",
