@@ -111,6 +111,24 @@ label_tests <- do.call(rbind, lapply(names(designs), function(k) {
 }))
 write.csv(label_tests, file.path(out, "label_tests.csv"), row.names = FALSE)
 
+##get pvalues of chisq + posthoc only in melted data format for integration into alluvial plotting in 01b_mixed_models_ERP.R
+label_tests_alluv <- do.call(rbind, lapply(names(designs), function(k) {
+  d <- designs[[k]]
+  lab <- stats::reshape(d[, c("sample", "condition", "label")], idvar = "sample", timevar = "condition", direction = "wide")
+  rownames(lab) <- lab$sample; lab$sample <- NULL; colnames(lab) <- sub("^label\\.", "", colnames(lab))
+  lab <- as.matrix(lab)[, levels(d$condition)]
+  perm <- anchor_permutation_test(lab, n_perm = 9999)
+  perm.df <- perm$cells
+  perm.df$ERPexperiment <- k
+  perm.df$ChisqPval <- perm$p
+  perm.df$ChisqPerm <- perm$n_perm
+  perm.df$ChisqN <- perm$n
+  perm.df$ChisqStatistic <- perm$statistic
+  return(perm.df)
+}))
+write.csv(label_tests_alluv, file.path(out, "label_tests_chisqOnly_meltedFormat.csv"), row.names = FALSE)
+
+
 # ---- 4. Legacy Dunn (unpaired, per-condition stratum, Hochberg) side by side -----
 legacy <- do.call(rbind, lapply(names(designs), function(k) {
   d <- designs[[k]]; d$condition <- as.character(d$condition)
