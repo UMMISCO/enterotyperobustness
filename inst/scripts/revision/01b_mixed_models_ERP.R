@@ -9,12 +9,12 @@
 #                  statistic -> tests of script 01
 #      Friedman/Conover by reference stratum (script 01) is the sensitivity check.
 #
-# Inputs : the saved figure objects (mirror) ??? same as script 01.
+# Inputs : the saved figure objects (mirror), the same as script 01.
 # Outputs: out/01b_mixed_models/  mixed_entropy_pairwise.csv, mixed_entropy_omnibus.csv,
 #          mixed_labels.csv, three_way_comparison.csv, tableS4_mixed.tex,
 #          Figure1C/1F/2C/2F.pdf (LMM brackets), Figure1_BCEF.pdf, Figure2_BCEF.pdf, summary.txt
 # ------------------------------------------------------------------------------
-suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
+suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2); library(dplyr); library(patchwork) })   # dplyr for the %>% pipelines of section 6
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
 fig <- file.path(mirror, "analyses/9.analyses_mars2026")

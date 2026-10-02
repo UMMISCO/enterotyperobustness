@@ -26,12 +26,12 @@ earlier ones under `out/`:
 |---|---|---|
 | `00_cache_erpm.R` | Reads the 56 stored ERPM environments once into `out/cache/erpm_legacy.rds`. | mirror |
 | `01_paired_tests_ERP.R` | Friedman/Conover, permutation Chi-square and Cochran's Q on the four ERP designs (R1 major 5). | mirror |
-| `01b_mixed_models_ERP.R` | Linear mixed model of entropy and mixed multinomial logit of labels; regenerated panels 1C/1F/2C/2F and Table S4. | mirror, `out/01_paired_tests` |
+| `01b_mixed_models_ERP.R` | Linear mixed model of entropy and mixed multinomial logit of labels; regenerated panels 1C/1F/2C/2F and Table S4; alluvial panels B/E annotated with the cell-level permutation post hoc marks (`Figure1_BCEF_addStatsAlluvials.pdf`, `Figure2_BCEF_addStatsAlluvials.pdf`, from `label_tests_chisqOnly_meltedFormat.csv` written by 01). Needs dplyr and patchwork. | mirror, `out/01_paired_tests` |
 | `02_bootstrap_CI_ERPM.R` | BCa bootstrap ribbons for Figures 3, 4 and S3, next to the submitted and the corrected normal intervals (R1 major 6). | `out/cache`, mirror figure objects |
 | `03_cluster_matching.R` | Scripts 03 and 04: centroid matching against a reference fit, adjusted Rand index, Bacteroides gap (R1 major 1). | mirror, `METACARDIS_DATA` |
 | `05_anomaly_tables.R` | Tables S1 to S3 from the raw flags; re-aggregation without flagged iterations. Set `SUPPLEMENTAL_TEX` to compare with the submitted tables. | mirror, `out/cache` |
 | `06_core_variable_sensitivity.R` | Unanimity vs all-but-one vs SD thresholds for the core/variable rule (R1 minor 1). | mirror, `out/cache` |
-| `07_size_baseline.R` | The anchors under their own-group ERP condition versus under ERPM at the matched cohort fraction: size baseline for the composition effect (R1 major 4). | `out/cache`, mirror figure objects |
+| `07_size_baseline.R` | The anchors under their own-group ERP condition versus under ERPM at the matched cohort fraction: size baseline for the composition effect (R1 major 4); alluvial of each anchor's ERP versus ERPM label with the permutation test (`Figure_size_baseline_addAlluvial.pdf`, `Figure_size_baseline_simple_addAlluvial.pdf`). Needs dplyr, tidyr and patchwork. | `out/cache`, mirror figure objects |
 | `08_erp_rerun_matched.R` | Every ERP condition refitted with the legacy draws and `annotate = "match"` (no Bacteroides rank), compared with the published labelling (R1 major 1, confirmatory). | `METACARDIS_DATA`, mirror, `out/cache/reference_fit.rds` |
 | `09_alt_clustering_PAM_JSD.R` | ERPM repeated with PAM on Jensen-Shannon distance: are ERP-core individuals more robust than ERP-variable ones under a clustering independent of DMM (R1 major 2)? | `METACARDIS_DATA`, `out/cache`, mirror figure objects |
 | `10_alt_K.R` | ERPM with K = 3 and K = 5 DMM components matched to full-cohort reference fits (R1 minor 4). | `METACARDIS_DATA`, `out/cache`, mirror figure objects |

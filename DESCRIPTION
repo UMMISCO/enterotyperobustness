@@ -46,6 +46,8 @@ Suggests:
     mclogit,
     nnet,
     pkgload,
-    cluster
+    cluster,
+    dplyr,
+    tidyr
 Config/testthat/edition: 3
 VignetteBuilder: knitr

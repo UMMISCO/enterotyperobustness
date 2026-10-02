@@ -19,7 +19,7 @@
 #          condition_vs_size_spread.csv, erpm_curve_anchors.csv, Figure_size_baseline.pdf,
 #          summary.txt
 # ------------------------------------------------------------------------------
-suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
+suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2); library(dplyr); library(patchwork) })   # dplyr and patchwork for the ERP-vs-ERPM alluvials
 source("inst/scripts/cache_utils.R")
 mirror <- Sys.getenv("ENTEROTYPES_MIRROR")
 if (!nzchar(mirror) || !dir.exists(mirror)) stop("Set ENTEROTYPES_MIRROR to the directory holding the 2022 analyses (private, not distributed).")
