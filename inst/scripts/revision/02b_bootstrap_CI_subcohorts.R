@@ -33,6 +33,13 @@ ci <- do.call(rbind, lapply(split(rob, list(rob$subcohort, rob$fraction, rob$ent
   b <- bootstrap_ci(x$robustness, R = R_samples, type = "bca", seed = seed)
   data.frame(subcohort = x$subcohort[1], fraction = x$fraction[1], group = x$enterotype[1], n = length(x$robustness),
              mean = b[["mean"]], lower = b[["lower"]], upper = b[["upper"]]) }))
+
+##subset rob and ci to common sample fractions (exclude sub-cohort fractions <50% in in 30% set)
+tfractions.table <- table(rob$subcohort, rob$fraction) ##table of subcohort x fractions
+tfractions.core <- names(colSums(tfractions.table>0)[colSums(tfractions.table>0)==nrow(tfractions.table)]) ##get fractions common to all subcohorts
+rob <- rob[rob$fraction %in% as.numeric(tfractions.core),] ##subset rob to tfractions.core
+ci <- ci[ci$fraction %in% as.numeric(tfractions.core),] ##subset ci to tfractions.core
+##continue with the analyses
 ci <- ci[order(ci$group, ci$subcohort, ci$fraction), ]; rownames(ci) <- NULL
 write.csv(ci, file.path(out, "figS3_ci.csv"), row.names = FALSE)
 # tests across sub-cohorts at each fraction, per enterotype
