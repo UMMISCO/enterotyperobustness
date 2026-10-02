@@ -84,6 +84,101 @@ paired <- do.call(rbind, lapply(names(designs), function(a) {
              n_drawn_erpm = m$n_drawn, matched_fraction = Q, n_erp = e$n_clustered[1], n_erpm = round(Q * N_cohort))
 }))
 write.csv(paired, file.path(out, "anchors_erp_vs_erpm.csv"), row.names = FALSE)
+
+##visualize alluvial of enterotype assignments of anchors btw ERP (healthy-healthy/t2Dmtf-t2Dmtf/ob-ob) and ERPM (same sample fraction as ERP) + chisq with permutation test for individual anchors
+paired.alluvials <- list()
+paired.chisqPerm <- list()
+for(i in unique(paired$anchor_set))
+{
+  idf <- paired[paired$anchor_set %in% i,]
+  ##paired chisq with permutation test
+  idf.chisq <- idf[,c("sample","enterotype_erp","enterotype_erpm")]
+  rownames(idf.chisq) <- idf.chisq$sample ; idf.chisq$sample <- NULL
+  idf.chisq.out <- anchor_permutation_test(labels = as.matrix(idf.chisq), n_perm = 9999)
+  idf.chisq.out.df <- idf.chisq.out$cells
+  idf.chisq.out.df$anchor_set <- i
+  idf.chisq.out.df$ChisqPval <- idf.chisq.out$p
+  idf.chisq.out.df$ChisqPerm <- idf.chisq.out$n_perm
+  idf.chisq.out.df$ChisqN <- idf.chisq.out$n
+  idf.chisq.out.df$ChisqStatistic <- idf.chisq.out$statistic
+  paired.chisqPerm[[i]] <- idf.chisq.out.df
+  ##melted table for alluvial plotting (base plot)
+  idf.chisq.melt <- idf[,c("sample","enterotype_erp","enterotype_erpm")] %>%
+    tidyr::pivot_longer(
+      cols = colnames(idf.chisq),
+      names_to = "variable",
+      values_to = "value"
+    )
+  idf.chisq.melt$enterotype <- factor(idf.chisq.melt$value, levels=names(enterotype_colours()))
+  idf.chisq.melt$anchor_set <- i
+  idf.alluvial <- ggplot2::ggplot(idf.chisq.melt, ggplot2::aes(x = variable, stratum = enterotype, alluvium = sample, fill = enterotype)) +
+    ggalluvial::geom_flow(stat = "alluvium") +
+    ggalluvial::geom_stratum() +
+    ggplot2::scale_fill_manual(values = enterotype_colours(), name = "enterotype") +
+    facet_grid(.~anchor_set) + 
+    ylab("Anchors") + 
+    ggplot2::theme_bw() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
+  
+  ##parse stats
+  idf.alluvial.stats <- idf.chisq.out.df %>%
+    dplyr::mutate(
+      # Bottom -> top stacking order
+      enterotype = factor(
+        enterotype,
+        levels = c(
+          "Ruminococcus",
+          "Prevotella",
+          "Bact1",
+          "Bact2"
+        )
+      )
+    ) %>%
+    
+    # IMPORTANT: arrange according to factor levels
+    dplyr::arrange(condition, enterotype) %>%
+    dplyr::group_by(condition) %>%
+    dplyr::mutate(
+      ymin = cumsum(observed) - observed,
+      ymax = cumsum(observed),
+      # Centre of each stratum
+      y = cumsum(observed) - observed / 2
+    ) %>%
+    dplyr::ungroup() %>%
+    
+    # Keep significant cells
+    dplyr::filter(p_adj < 0.05) %>%
+    dplyr::mutate(
+      stars = dplyr::case_when(
+        p_adj < 0.001 ~ "***",
+        p_adj < 0.01  ~ "**",
+        p_adj < 0.05  ~ "*"
+      ),
+      
+      annotation = paste0(
+        ifelse(residual > 0, "+", "-"),
+        stars
+      )
+    )
+  
+  # Add annotations AND assign result
+  idf.alluvial <- idf.alluvial +
+    geom_text(
+      data = idf.alluvial.stats,
+      aes(
+        x = condition,
+        y = y,
+        label = annotation
+      ),
+      inherit.aes = FALSE,
+      size = 5,
+      fontface = "bold"
+    )
+  paired.alluvials[[i]] <- idf.alluvial
+}
+##save the combined plot
+paired.alluvials.combined <- wrap_plots(paired.alluvials) + plot_layout(ncol=3, guides="collect") & theme(legend.position = "bottom")
+
 wtest <- function(x, y) { ok <- !is.na(x) & !is.na(y); if (sum(ok) < 5) return(NA_real_)
   suppressWarnings(stats::wilcox.test(x[ok], y[ok], paired = TRUE, exact = FALSE)$p.value) }
 tests <- do.call(rbind, lapply(names(designs), function(a) {
@@ -134,6 +229,10 @@ p <- ggplot() +
   theme_bw() + theme(legend.position = "bottom")
 ggsave(file.path(out, "Figure_size_baseline.pdf"), p, width = 13, height = 5)
 
+##Save combined plot with alluvials
+p2 <- (p + paired.alluvials.combined + plot_layout(nrow=2))
+ggsave(file.path(out, "Figure_size_baseline_addAlluvial.pdf"), p2, width = 13, height = 12)
+
 # ---- 5b. Simplified figure for the response letter: one curve per anchor set ------------------
 pooled_erpm <- do.call(rbind, lapply(split(erpm_rows, list(erpm_rows$anchor_set, erpm_rows$fraction), drop = TRUE), function(x) {
   b <- bootstrap_ci(x$robustness, R = 1000, type = "bca", seed = 314)
@@ -155,6 +254,10 @@ ps <- ggplot() +
   labs(x = "number of samples clustered together", y = "mean robustness of the anchor samples") +
   theme_bw() + theme(legend.position = "bottom")
 ggsave(file.path(out, "Figure_size_baseline_simple.pdf"), ps, width = 12, height = 4.2)
+
+##combine with alluvial
+ps2 <- (ps + paired.alluvials.combined + plot_layout(nrow=2))
+ggsave(file.path(out, "Figure_size_baseline_simple_addAlluvial.pdf"), ps2, width = 13, height = 10)
 
 # ---- 6. Summary ----------------------------------------------------------------------------------
 sink(file.path(out, "summary.txt"))
