@@ -79,6 +79,12 @@ s3 <- do.call(rbind, lapply(names(sub), function(M) {
     data.frame(M = as.integer(M), fraction = frac, BACT2 = cf[["BACT2"]], RUM = cf[["RUM"]], W = W, n_iter = cf[["n_iter"]])
   }))
 }))
+##Exclude fractions<0.5 for subcohort 30% (uniquely generated in this fraction; the others start at 50%)
+s3.table <- table(s3$M, s3$fraction)
+s3.fractions <- names(colSums(s3.table>0)[colSums(s3.table>0)==nrow(s3.table)])
+s3 <- s3[s3$fraction %in% as.numeric(s3.fractions),]
+table(s3$M, s3$fraction)
+#continue with previous code
 s3 <- s3[order(s3$M, s3$fraction), ]
 write.csv(s3, file.path(out, "tableS3.csv"), row.names = FALSE)
 s3_shown <- s3[s3$fraction >= 0.5, ]
