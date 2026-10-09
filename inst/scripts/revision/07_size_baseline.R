@@ -111,12 +111,14 @@ for(i in unique(paired$anchor_set))
     )
   idf.chisq.melt$enterotype <- factor(idf.chisq.melt$value, levels=names(enterotype_colours()))
   idf.chisq.melt$anchor_set <- i
+  idf.chisq.melt$variable <- factor(idf.chisq.melt$variable, levels = c("enterotype_erp", "enterotype_erpm"),
+                                    labels = c("ERP, own group", "ERPM, matched size"))   # axis labels for the journal figure
   idf.alluvial <- ggplot2::ggplot(idf.chisq.melt, ggplot2::aes(x = variable, stratum = enterotype, alluvium = sample, fill = enterotype)) +
     ggalluvial::geom_flow(stat = "alluvium") +
     ggalluvial::geom_stratum() +
     ggplot2::scale_fill_manual(values = enterotype_colours(), name = "enterotype") +
     facet_grid(.~anchor_set) + 
-    ylab("Anchors") + 
+    ylab("Anchors") + xlab(NULL) +
     ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, hjust = 1, vjust = 0.5))
   
@@ -158,7 +160,9 @@ for(i in unique(paired$anchor_set))
       annotation = paste0(
         ifelse(residual > 0, "+", "-"),
         stars
-      )
+      ),
+      condition = factor(condition, levels = c("enterotype_erp", "enterotype_erpm"),
+                         labels = c("ERP, own group", "ERPM, matched size"))   # same x labels as the flows
     )
   
   # Add annotations AND assign result
