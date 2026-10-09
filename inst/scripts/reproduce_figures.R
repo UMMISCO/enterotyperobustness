@@ -5,12 +5,13 @@
 #     drawn with ggplot2, assembled with patchwork, no in-plot titles (captions
 #     live in the manuscript), panel letters where the figure has several parts.
 #
-#   Supplementary Figure S6  ERP-core vs ERP-variable under DMM and under PAM/JSD   (script 09)
-#   Supplementary Figure S7  ERPM robustness with K = 3, 4, 5                        (script 10)
-#   Supplementary Figure S8  core/variable rule sensitivity (Figure 3B under rules)  (script 06)
+#   Supplementary Figure S7  ERP-core vs ERP-variable under DMM and under PAM/JSD   (script 09)
+#   Supplementary Figure S8  ERPM robustness with K = 3, 4, 5                        (script 10)
+#   Supplementary Figure S9  core/variable rule sensitivity (Figure 3B under rules)  (script 06)
 #   Figures 3 and 4          BCa ribbons (script 02) and test bars (script 11)       [when 11 exists]
-#   Supplementary Figure S4  sub-cohorts, BCa ribbons and tests (script 02b)          [when 02b exists]
-#   (Supplementary Figure S2, the Bacteroides gap, is out/03_cluster_matching/Bacteroides_gap.pdf)
+#   Supplementary Figure S5  sub-cohorts, BCa ribbons and tests (script 02b)          [when 02b exists]
+#   (Supplementary Figure S3, the Bacteroides gap, is out/03_cluster_matching/Bacteroides_gap.pdf;
+#    Supplementary Figure S4, the size baseline, is out/07_size_baseline/Figure_size_baseline_simple_addAlluvial.pdf)
 #   Figures 1 and 2, panels B to F: produced by script 01b (Figure1_BCEF.pdf, Figure2_BCEF.pdf);
 #   the flower panels A and D are added in Inkscape by E.B.
 #
@@ -26,7 +27,7 @@ th <- theme_bw(base_size = 9) + theme(strip.background = element_rect(fill = "gr
                                       panel.grid.minor = element_blank(), plot.tag = element_text(face = "bold"))
 line95 <- geom_hline(yintercept = 0.95, linetype = "dashed", colour = "grey45", linewidth = 0.3)
 
-# ---- S5: PAM / JSD ----------------------------------------------------------------------------
+# ---- S7: PAM / JSD ----------------------------------------------------------------------------
 if (file.exists("out/09_pam_jsd/core_vs_variable.csv")) {
   cv <- read.csv("out/09_pam_jsd/core_vs_variable.csv")
   long <- rbind(data.frame(cv[, c("clustering", "fraction", "enterotype")], status = "core", mean = cv$mean_core),
@@ -37,10 +38,10 @@ if (file.exists("out/09_pam_jsd/core_vs_variable.csv")) {
     facet_grid(enterotype ~ clustering) + scale_colour_manual(values = status_cols, name = NULL) +
     scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
     labs(x = "fraction of the cohort drawn at each ERPM iteration", y = "mean robustness") + th
-  ggsave(file.path(out, "FigureS6_PAM_core_variable.pdf"), p, width = 6.5, height = 7.5)
+  ggsave(file.path(out, "FigureS7_PAM_core_variable.pdf"), p, width = 6.5, height = 7.5)
 }
 
-# ---- S6: alternative K -------------------------------------------------------------------------
+# ---- S8: alternative K -------------------------------------------------------------------------
 if (file.exists("out/10_alt_K/core_vs_variable_by_K.csv")) {
   cv <- read.csv("out/10_alt_K/core_vs_variable_by_K.csv"); rb <- read.csv("out/10_alt_K/robustness_by_K.csv")
   curve <- aggregate(robustness ~ K + fraction, rb, mean)
@@ -52,10 +53,10 @@ if (file.exists("out/10_alt_K/core_vs_variable_by_K.csv")) {
     facet_wrap(~K, nrow = 1) + scale_colour_manual(values = status_cols, name = NULL) +
     scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
     labs(x = "fraction of the cohort drawn at each ERPM iteration", y = "mean robustness") + th
-  ggsave(file.path(out, "FigureS7_alt_K.pdf"), p, width = 7.5, height = 3.2)
+  ggsave(file.path(out, "FigureS8_alt_K.pdf"), p, width = 7.5, height = 3.2)
 }
 
-# ---- S7: criterion sensitivity ---------------------------------------------------------------
+# ---- S9: criterion sensitivity ---------------------------------------------------------------
 if (file.exists("out/06_core_variable/fig3B_by_rule.csv")) {
   f <- read.csv("out/06_core_variable/fig3B_by_rule.csv")
   keep <- c("unanimous", "k_minus_1", "sd<0.05", "sd<0.10", "sd<0.20", "sd<0.30")
@@ -69,7 +70,7 @@ if (file.exists("out/06_core_variable/fig3B_by_rule.csv")) {
     scale_x_continuous(labels = scales::percent_format(accuracy = 1), breaks = c(0.25, 0.5, 0.75)) +
     labs(x = "fraction of the cohort drawn at each ERPM iteration", y = "mean robustness") + th +
     theme(strip.text.x = element_text(size = 7))
-  ggsave(file.path(out, "FigureS8_criterion_sensitivity.pdf"), p, width = 9, height = 7)
+  ggsave(file.path(out, "FigureS9_criterion_sensitivity.pdf"), p, width = 9, height = 7)
 }
 
 # ---- Figures 3 and 4: BCa ribbons + test bars (needs scripts 02 and 11) --------------------------
@@ -133,7 +134,7 @@ if (file.exists("out/02_bootstrap_CI/fig4A_ci.csv") && file.exists("out/11_erpm_
   ggsave(file.path(out, "Figure4_pairs.pdf"), fig4, width = 10, height = 9)
 }
 
-# ---- S3: sub-cohorts (needs 02b) ------------------------------------------------------------------
+# ---- S5: sub-cohorts (needs 02b) ------------------------------------------------------------------
 if (file.exists("out/02b_subcohorts/figS3_ci.csv")) {
   ci <- read.csv("out/02b_subcohorts/figS3_ci.csv"); t <- read.csv("out/02b_subcohorts/figS3_tests.csv")
   ci$group <- factor(ci$group, levels = ent)
@@ -147,6 +148,6 @@ if (file.exists("out/02b_subcohorts/figS3_ci.csv")) {
     scale_x_continuous(labels = scales::percent_format(accuracy = 1)) + coord_cartesian(ylim = c(min(ci$lower), 1)) +
     labs(x = "fraction of the sub-cohort drawn at each ERPM iteration", y = "mean robustness") + th
   figS3 <- wrap_plots(pA, pB, ncol = 1) + plot_annotation(tag_levels = "A")
-  ggsave(file.path(out, "FigureS4_subcohorts.pdf"), figS3, width = 11, height = 7)
+  ggsave(file.path(out, "FigureS5_subcohorts.pdf"), figS3, width = 11, height = 7)
 }
 cat("figures written to", out, ":\n"); print(list.files(out))

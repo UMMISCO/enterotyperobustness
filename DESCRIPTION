@@ -3,11 +3,11 @@ Type: Package
 Title: Sampling-Based Evaluation of Enterotype Assignment Stability (ERP and ERPM)
 Version: 0.1.0
 Authors@R: c(
-    person("Irene", "Creus-Marti", role = c("aut")),
-    person("Eugeni", "Belda", email = "eugeni.belda@ird.fr", role = c("aut", "cre")),
+    person("Irene", "Creus-Marti", role = "aut"),
     person("Jean-Daniel", "Zucker", role = "aut"),
+    person("Karine", "Clement", role = "aut"),
     person("Edi", "Prifti", role = "aut"),
-    person("Karine", "Clement", role = "aut"))
+    person("Eugeni", "Belda", email = "eugeni.belda@ird.fr", role = c("aut", "cre")))
 Description: Two resampling procedures that quantify how stable individual enterotype
     assignments are under Dirichlet Multinomial Mixture (DMM) clustering. The Enterotype
     Robustness Process (ERP) holds an anchor set of samples fixed and varies the clinical
