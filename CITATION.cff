@@ -6,12 +6,30 @@ title: "enterotyperobustness: Sampling-Based Evaluation of Enterotype Assignment
 version: "0.1.0"
 
 authors:
+  - family-names: "Creus-Martí"
+    given-names: "Irene"
+    affiliation: "Universitat de València; IRD, Sorbonne Université, UMMISCO"
+  - family-names: "Zucker"
+    given-names: "Jean-Daniel"
+    affiliation: "IRD, Sorbonne Université, UMMISCO; Sorbonne Université, INSERM, NutriOmique"
+  - family-names: "Clément"
+    given-names: "Karine"
+    affiliation: "Sorbonne Université, INSERM, NutriOmique; AP-HP, Pitié-Salpêtrière Hospital"
+  - family-names: "Prifti"
+    given-names: "Edi"
+    affiliation: "IRD, Sorbonne Université, UMMISCO; Sorbonne Université, INSERM, NutriOmique"
   - family-names: "Belda"
     given-names: "Eugeni"
     orcid: "https://orcid.org/0000-0003-4307-5072"
+    affiliation: "IRD, Sorbonne Université, UMMISCO; Sorbonne Université, INSERM, NutriOmique"
 
 repository-code: "https://github.com/UMMISCO/enterotyperobustness"
 url: "https://git.ummisco.fr/enterotypes/enterotyperobustness"
 
 license: "MIT"
-
+keywords:
+  - enterotypes
+  - gut microbiome
+  - Dirichlet multinomial mixture
+  - resampling
+  - robustness

@@ -3,18 +3,47 @@
   "upload_type": "software",
   "description": "R package implementing the Enterotype Robustness Process (ERP), which holds an anchor set of samples fixed and varies the clinical composition of the samples clustered with them, and its size-perturbation variant (ERPM), which varies the fraction of a cohort that is clustered, under Dirichlet Multinomial Mixture clustering. It includes the cluster-to-enterotype annotation (rank heuristic and centroid matching), the robustness and entropy metrics, the design-aware statistical tests, and the scripts that produced the figures and tables of the paper \"A Sampling-Based Computational Framework for Evaluating Enterotype Assignment Stability in Clinical Microbiome Studies\" (Scientific Reports). The package takes an abundance matrix and sample identifiers and ships no cohort data.",
   "creators": [
-    {"name": "Creus-Martí, Irene", "affiliation": "Department of Statistics and Operational Research, Universitat de València, Spain; IRD, Sorbonne Université, UMMISCO, Paris, France"},
-    {"name": "Zucker, Jean-Daniel", "affiliation": "IRD, Sorbonne Université, UMMISCO, Paris, France; Sorbonne Université, INSERM, NutriOmique, Paris, France"},
-    {"name": "Clément, Karine", "affiliation": "Sorbonne Université, INSERM, NutriOmique, Paris, France; Assistance Publique-Hôpitaux de Paris, Pitié-Salpêtrière Hospital, Paris, France"},
-    {"name": "Prifti, Edi", "affiliation": "IRD, Sorbonne Université, UMMISCO, Paris, France; Sorbonne Université, INSERM, NutriOmique, Paris, France"},
-    {"name": "Belda, Eugeni", "affiliation": "IRD, Sorbonne Université, UMMISCO, Paris, France; Sorbonne Université, INSERM, NutriOmique, Paris, France"}
+    {
+      "name": "Creus-Martí, Irene",
+      "affiliation": "Department of Statistics and Operational Research, Universitat de València, Spain; IRD, Sorbonne Université, UMMISCO, Paris, France"
+    },
+    {
+      "name": "Zucker, Jean-Daniel",
+      "affiliation": "IRD, Sorbonne Université, UMMISCO, Paris, France; Sorbonne Université, INSERM, NutriOmique, Paris, France"
+    },
+    {
+      "name": "Clément, Karine",
+      "affiliation": "Sorbonne Université, INSERM, NutriOmique, Paris, France; Assistance Publique-Hôpitaux de Paris, Pitié-Salpêtrière Hospital, Paris, France"
+    },
+    {
+      "name": "Prifti, Edi",
+      "affiliation": "IRD, Sorbonne Université, UMMISCO, Paris, France; Sorbonne Université, INSERM, NutriOmique, Paris, France"
+    },
+    {
+      "name": "Belda, Eugeni",
+      "affiliation": "IRD, Sorbonne Université, UMMISCO, Paris, France; Sorbonne Université, INSERM, NutriOmique, Paris, France",
+      "orcid": "0000-0003-4307-5072"
+    }
   ],
   "contributors": [
-    {"name": "Belda, Eugeni", "type": "ContactPerson", "affiliation": "IRD, Sorbonne Université, UMMISCO, Paris, France"}
+    {
+      "name": "Belda, Eugeni",
+      "type": "ContactPerson",
+      "affiliation": "IRD, Sorbonne Université, UMMISCO, Paris, France",
+      "orcid": "0000-0003-4307-5072"
+    }
   ],
   "license": "MIT",
   "access_right": "open",
   "language": "eng",
-  "keywords": ["enterotypes", "gut microbiome", "Dirichlet multinomial mixture", "resampling", "robustness", "MetaCardis", "R package"],
+  "keywords": [
+    "enterotypes",
+    "gut microbiome",
+    "Dirichlet multinomial mixture",
+    "resampling",
+    "robustness",
+    "MetaCardis",
+    "R package"
+  ],
   "notes": "The outputs of the analysis scripts (per-sample assignment frequencies, consensus labels and test results of the MetaCardis cohort) are deposited in a separate Zenodo record with restricted access, because they carry the clinical group of each sample. The MetaCardis abundance table is available from the MetaCardis consortium on request."
 }

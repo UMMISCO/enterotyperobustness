@@ -6,3 +6,4 @@
 ^\.gitignore$
 ^README\.Rmd$
 ^\.zenodo\.json$
+^CITATION\.cff$
