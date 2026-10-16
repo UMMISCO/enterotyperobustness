@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+
+title: "enterotyperobustness: Sampling-Based Evaluation of Enterotype Assignment Stability (ERP and ERPM)"
+version: "0.1.0"
+
+authors:
+  - family-names: "Belda"
+    given-names: "Eugeni"
+    orcid: "https://orcid.org/0000-0003-4307-5072"
+
+repository-code: "https://github.com/UMMISCO/enterotyperobustness"
+url: "https://git.ummisco.fr/enterotypes/enterotyperobustness"
+
+license: "MIT"
+
