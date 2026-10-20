@@ -59,7 +59,8 @@ if [ -n "$TGZ" ]; then
   ENTEROTYPES_MIRROR="$MIRROR" METACARDIS_DATA="$DATA" _R_CHECK_CRAN_INCOMING_REMOTE_=false R CMD check --no-manual "$TGZ" > check.log 2>&1
   say "tarball:          $TGZ (md5 $(md5f "$TGZ"))"
   say "check:            $(grep '^Status:' check.log)  [$(( $(date +%s) - t0 ))s]"
-  grep -E '^\* checking .*(WARNING|ERROR|NOTE)$' check.log | sed 's/^/  /' | tee -a "$R"
+  grep -E '^\* checking' check.log | grep -vE '\.\.\. (OK|NONE|SKIPPED)$' | sed 's/^/  /' | tee -a "$R"
+  grep -E '^ *(WARNING|ERROR|NOTE)$' -A3 check.log | grep -vE '^ *(WARNING|ERROR|NOTE)$|^--$' | sed 's/^/    > /' | tee -a "$R"
   say "tests:            $(grep -hE '\[ FAIL' enterotyperobustness.Rcheck/tests/testthat.Rout* 2>/dev/null | tail -1)"
   grep -hA12 'Skipped tests' enterotyperobustness.Rcheck/tests/testthat.Rout* 2>/dev/null | grep -E '^\*' | sed 's/^/  skipped: /' | tee -a "$R"
 fi
