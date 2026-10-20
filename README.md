@@ -62,6 +62,5 @@ devtools::install()     # from the package directory
 
 ## Repositories
 
-- Source of truth: `https://git.ummisco.fr/enterotypes/enterotyperobustness` (UMMISCO GitLab, private during the revision).
-- Mirror: `https://github.com/UMMISCO/enterotyperobustness`. Until GitLab push mirroring is confirmed to work, `git push` from the package pushes to both (the `origin` remote has two push URLs).
+- Code: `https://github.com/UMMISCO/enterotyperobustness`; each release is archived at Zenodo (see `citation("enterotyperobustness")`).
 - No data is ever committed: the MetaCardis tables are read from paths given by environment variables (`METACARDIS_DATA`, `ENTEROTYPES_MIRROR`), which have no default. Without them the scripts under `inst/scripts/` stop with a message and the legacy tests are skipped.

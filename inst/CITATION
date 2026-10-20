@@ -17,7 +17,7 @@ bibentry(
   author  = c(person("Irene", "Creus-Martí"), person("Jean-Daniel", "Zucker"), person("Karine", "Clément"),
               person("Edi", "Prifti"), person("Eugeni", "Belda")),
   year    = "2026",
-  note    = "R package; archived at Zenodo (DOI to be added at the first release)",
+  note    = "R package version 1.0.0, archived at Zenodo",
   url     = "https://github.com/UMMISCO/enterotyperobustness",
-  textVersion = "Creus-Martí I, Zucker J-D, Clément K, Prifti E, Belda E (2026). enterotyperobustness: sampling-based evaluation of enterotype assignment stability (ERP and ERPM). R package, https://github.com/UMMISCO/enterotyperobustness, archived at Zenodo."
+  textVersion = "Creus-Martí I, Zucker J-D, Clément K, Prifti E, Belda E (2026). enterotyperobustness: sampling-based evaluation of enterotype assignment stability (ERP and ERPM). R package version 1.0.0, https://github.com/UMMISCO/enterotyperobustness, archived at Zenodo."
 )

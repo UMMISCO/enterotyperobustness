@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # ------------------------------------------------------------------------------
-# 00b Read the ERPM sub-cohort environments once (Supplementary Figure S3 and
+# 00b Read the ERPM sub-cohort environments once (Supplementary Figure S5 and
 #     Table S3: ERPM repeated on sub-cohorts of the MetaCardis dataset, one
 #     ConfidenceN=* folder per sub-cohort) and cache the integer-coded
 #     assignments, as script 00 does for the full cohort.

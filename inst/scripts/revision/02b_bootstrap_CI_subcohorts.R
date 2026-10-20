@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 # ------------------------------------------------------------------------------
-# 02b BCa bootstrap intervals and design-aware tests for Supplementary Figure S3
+# 02b BCa bootstrap intervals and design-aware tests for Supplementary Figure S5
 #     (ERPM on sub-cohorts of the MetaCardis dataset), the counterpart of script
 #     02 for Figure 3A. For every sub-cohort, fraction and enterotype: mean
 #     robustness with a BCa bootstrap interval over samples. Tests: at each
@@ -10,7 +10,8 @@
 #
 # Inputs : out/cache/erpm_subcohorts.rds (script 00b)
 # Outputs: out/02b_subcohorts/  figS3_ci.csv, figS3_tests.csv, figS3_curve_level.csv,
-#          FigureS3_draft.pdf, summary.txt
+#          FigureS3_draft.pdf, summary.txt  (file names predate the renumbering:
+#          the sub-cohorts are Supplementary Figure S5, drawn by reproduce_figures.R)
 # ------------------------------------------------------------------------------
 suppressMessages({ pkgload::load_all(".", quiet = TRUE); library(ggplot2) })
 source("inst/scripts/cache_utils.R")

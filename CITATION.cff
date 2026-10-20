@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 type: software
 
 title: "enterotyperobustness: Sampling-Based Evaluation of Enterotype Assignment Stability (ERP and ERPM)"
-version: "0.1.0"
+version: "1.0.0"
 
 authors:
   - family-names: "Creus-Martí"
@@ -24,7 +24,7 @@ authors:
     affiliation: "IRD, Sorbonne Université, UMMISCO; Sorbonne Université, INSERM, NutriOmique"
 
 repository-code: "https://github.com/UMMISCO/enterotyperobustness"
-url: "https://git.ummisco.fr/enterotypes/enterotyperobustness"
+url: "https://github.com/UMMISCO/enterotyperobustness"
 
 license: "MIT"
 keywords:

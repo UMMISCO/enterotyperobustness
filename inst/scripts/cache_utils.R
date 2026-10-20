@@ -68,7 +68,7 @@ reference_fit_manifest <- function(A, md) {
                  inputs = list(A = A, marker_features = md$marker_features, richness = md$richness[rownames(A)]))
 }
 
-# The ERPM sub-cohort environments (Supplementary Figure S3 / Table S3), read by script 00b.
+# The ERPM sub-cohort environments (Supplementary Figure S5 / Table S3), read by script 00b.
 subcohort_dirs <- function(art) sort(list.files(art, pattern = "^ConfidenceN=", full.names = TRUE))
 subcohort_files <- function(art) unlist(lapply(subcohort_dirs(art), function(d)
   list.files(d, pattern = "^Conf_?[0-9.]+_TotalEnvironment\\.RData$", full.names = TRUE)))

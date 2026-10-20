@@ -1,7 +1,7 @@
 Package: enterotyperobustness
 Type: Package
 Title: Sampling-Based Evaluation of Enterotype Assignment Stability (ERP and ERPM)
-Version: 0.1.0
+Version: 1.0.0
 Authors@R: c(
     person("Irene", "Creus-Marti", role = "aut"),
     person("Jean-Daniel", "Zucker", role = "aut"),
@@ -17,7 +17,7 @@ Description: Two resampling procedures that quantify how stable individual enter
     Cluster-to-enterotype annotation is available as the original rank heuristic and as
     centroid matching across iterations.
 License: MIT + file LICENSE
-URL: https://git.ummisco.fr/enterotypes/enterotyperobustness, https://github.com/UMMISCO/enterotyperobustness
+URL: https://github.com/UMMISCO/enterotyperobustness
 BugReports: https://github.com/UMMISCO/enterotyperobustness/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

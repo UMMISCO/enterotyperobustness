@@ -16,6 +16,17 @@ and write under `out/` (git-ignored). Run them from the package root
 | `reproduce_figures.R` | Figures 3 and 4 and Supplementary Figures S5, S7, S8 and S9 from the result objects, written to `out/figures/` and copied into the manuscript under the compiled numbers. Supplementary Figure S3 (Bacteroides gap) and S4 (size baseline) are the outputs of scripts 03 and 07; panels B to F of Figures 1 and 2 come from script 01b (the flower panels A and D are added in Inkscape). | outputs of the scripts below |
 | `determinism_check.R`, `determinism_full.R`, `rerun_compare.R` | Run-to-run (non-)determinism of `dmn()` on the stored draws; see the note in `erp()`. | `ENTEROTYPES_MIRROR` |
 
+## Archival re-run
+
+`release_rerun.sh` clones the committed HEAD into an empty directory, runs
+`R CMD check` with the private data visible and then `run_all.sh` with
+`CACHE_STRICT=1`, and writes `audit_report.txt` (commit, versions, status,
+warning counts, output file counts and checksums; no data):
+
+```bash
+bash inst/scripts/release_rerun.sh /path/to/ENTEROTYPES /path/to/mcdb.sub.26122022.Rda 12 ~/rerun_1.0.0
+```
+
 ## Revision scripts (`revision/`)
 
 One per reviewer point; see `Reviews/todo.md` section A of the manuscript
@@ -25,9 +36,11 @@ earlier ones under `out/`:
 | Script | Purpose | Needs |
 |---|---|---|
 | `00_cache_erpm.R` | Reads the 56 stored ERPM environments once into `out/cache/erpm_legacy.rds`. | mirror |
+| `00b_cache_subcohorts.R` | Reads the stored ERPM sub-cohort environments into `out/cache/erpm_subcohorts.rds` (Supplementary Figure S5). Not run by `run_all.sh`. | mirror |
 | `01_paired_tests_ERP.R` | Friedman/Conover, permutation Chi-square and Cochran's Q on the four ERP designs (R1 major 5). | mirror |
 | `01b_mixed_models_ERP.R` | Linear mixed model of entropy and mixed multinomial logit of labels; regenerated panels 1C/1F/2C/2F and Table S4; alluvial panels B/E annotated with the cell-level permutation post hoc marks (`Figure1_BCEF_addStatsAlluvials.pdf`, `Figure2_BCEF_addStatsAlluvials.pdf`, from `label_tests_chisqOnly_meltedFormat.csv` written by 01). Needs dplyr and patchwork. | mirror, `out/01_paired_tests` |
 | `02_bootstrap_CI_ERPM.R` | BCa bootstrap ribbons for Figures 3, 4 and S5, next to the submitted and the corrected normal intervals (R1 major 6). | `out/cache`, mirror figure objects |
+| `02b_bootstrap_CI_subcohorts.R` | BCa ribbons and tests for the ERPM sub-cohorts (Supplementary Figure S5). Not run by `run_all.sh`. | `out/cache` (script 00b) |
 | `03_cluster_matching.R` | Scripts 03 and 04: centroid matching against a reference fit, adjusted Rand index, Bacteroides gap (R1 major 1). | mirror, `METACARDIS_DATA` |
 | `05_anomaly_tables.R` | Tables S1 to S3 from the raw flags; re-aggregation without flagged iterations. Set `SUPPLEMENTAL_TEX` to compare with the submitted tables. | mirror, `out/cache` |
 | `06_core_variable_sensitivity.R` | Unanimity vs all-but-one vs SD thresholds for the core/variable rule (R1 minor 1). | mirror, `out/cache` |
@@ -35,8 +48,9 @@ earlier ones under `out/`:
 | `08_erp_rerun_matched.R` | Every ERP condition refitted with the legacy draws and `annotate = "match"` (no Bacteroides rank), compared with the published labelling (R1 major 1, confirmatory). | `METACARDIS_DATA`, mirror, `out/cache/reference_fit.rds` |
 | `09_alt_clustering_PAM_JSD.R` | ERPM repeated with PAM on Jensen-Shannon distance: are ERP-core individuals more robust than ERP-variable ones under a clustering independent of DMM (R1 major 2)? | `METACARDIS_DATA`, `out/cache`, mirror figure objects |
 | `10_alt_K.R` | ERPM with K = 3 and K = 5 DMM components matched to full-cohort reference fits (R1 minor 4). | `METACARDIS_DATA`, `out/cache`, mirror figure objects |
+| `11_erpm_tests.R` | Design-aware tests for Figures 3A, 3B, 4A and 4B (replace the per-fraction Kruskal-Wallis/Dunn tests). Not run by `run_all.sh`. | `out/cache`, mirror figure objects |
 
-`run_all.sh` runs 00 to 10 in order with one log per script under `out/logs/`
+`run_all.sh` runs 00 to 10 in order (00b, 02b, 11 and `reproduce_figures.R` are run separately, after it) with one log per script under `out/logs/`
 and an MD5 manifest of every output (`out/output_manifest.txt`):
 
 ```bash
