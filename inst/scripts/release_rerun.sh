@@ -62,7 +62,7 @@ if [ -n "$TGZ" ]; then
   grep -E '^\* checking' check.log | grep -vE '\.\.\. (OK|NONE|SKIPPED)$' | sed 's/^/  /' | tee -a "$R"
   grep -E '^ *(WARNING|ERROR|NOTE)$' -A3 check.log | grep -vE '^ *(WARNING|ERROR|NOTE)$|^--$' | sed 's/^/    > /' | tee -a "$R"
   say "tests:            $(grep -hE '\[ FAIL' enterotyperobustness.Rcheck/tests/testthat.Rout* 2>/dev/null | tail -1)"
-  grep -hA12 'Skipped tests' enterotyperobustness.Rcheck/tests/testthat.Rout* 2>/dev/null | grep -E '^\*' | sed 's/^/  skipped: /' | tee -a "$R"
+  grep -hA12 'Skipped tests' enterotyperobustness.Rcheck/tests/testthat.Rout* 2>/dev/null | grep -E '^(\*|•)' | sed 's/^/  skipped: /' | tee -a "$R"
 fi
 say ""
 say "## 4. run_all.sh (CACHE_STRICT=1)"
