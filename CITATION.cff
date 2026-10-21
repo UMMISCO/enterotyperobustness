@@ -4,6 +4,8 @@ type: software
 
 title: "enterotyperobustness: Sampling-Based Evaluation of Enterotype Assignment Stability (ERP and ERPM)"
 version: "1.0.0"
+doi: "10.5281/zenodo.23531524"
+date-released: "2026-10-21"
 
 authors:
   - family-names: "Creus-Martí"

@@ -1,5 +1,7 @@
 # enterotyperobustness
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23531524.svg)](https://doi.org/10.5281/zenodo.23531524)
+
 Sampling-based evaluation of enterotype assignment stability under Dirichlet
 Multinomial Mixture (DMM) clustering: the **ERP** (composition perturbation) and
 **ERPM** (size perturbation) procedures of Creus-Martí *et al.* (*Scientific
@@ -62,5 +64,5 @@ devtools::install()     # from the package directory
 
 ## Repositories
 
-- Code: `https://github.com/UMMISCO/enterotyperobustness`; each release is archived at Zenodo (see `citation("enterotyperobustness")`).
+- Code: `https://github.com/UMMISCO/enterotyperobustness`; each release is archived at Zenodo (version 1.0.0: [doi:10.5281/zenodo.23531524](https://doi.org/10.5281/zenodo.23531524); see `citation("enterotyperobustness")`).
 - No data is ever committed: the MetaCardis tables are read from paths given by environment variables (`METACARDIS_DATA`, `ENTEROTYPES_MIRROR`), which have no default. Without them the scripts under `inst/scripts/` stop with a message and the legacy tests are skipped.
