@@ -65,4 +65,5 @@ devtools::install()     # from the package directory
 ## Repositories
 
 - Code: `https://github.com/UMMISCO/enterotyperobustness`; each release is archived at Zenodo (version 1.0.0: [doi:10.5281/zenodo.23531524](https://doi.org/10.5281/zenodo.23531524); see `citation("enterotyperobustness")`).
+- Analysis outputs on the MetaCardis cohort (version 1.0.0, restricted access, on request): [doi:10.5281/zenodo.23537528](https://doi.org/10.5281/zenodo.23537528).
 - No data is ever committed: the MetaCardis tables are read from paths given by environment variables (`METACARDIS_DATA`, `ENTEROTYPES_MIRROR`), which have no default. Without them the scripts under `inst/scripts/` stop with a message and the legacy tests are skipped.

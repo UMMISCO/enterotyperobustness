@@ -45,5 +45,13 @@
     "MetaCardis",
     "R package"
   ],
-  "notes": "The outputs of the analysis scripts (per-sample assignment frequencies, consensus labels and test results of the MetaCardis cohort) are deposited in a separate Zenodo record with restricted access, because they carry the clinical group of each sample. The MetaCardis abundance table is available from the MetaCardis consortium on request."
+  "notes": "The outputs of the analysis scripts on the MetaCardis cohort (per-sample assignment frequencies, consensus labels, cached assignments and test results) are deposited with restricted access at doi:10.5281/zenodo.23537528, because they carry the clinical group of each sample. The MetaCardis abundance table is available from the MetaCardis consortium on request.",
+  "related_identifiers": [
+    {
+      "identifier": "10.5281/zenodo.23537528",
+      "relation": "isSupplementedBy",
+      "resource_type": "dataset",
+      "scheme": "doi"
+    }
+  ]
 }
